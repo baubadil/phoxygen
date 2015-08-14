@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 
 #
-# phoxygen -- Quick hack to produce doxygen-like documentation from the Doreen source code.
-# This can do less than Doxygen, but in addition to that, it parses PHP correctly and can document
-# SQL CREATE TABLE statements.
+# phoxygen -- Quick hack to produce doxygen-like documentation from PHP source code.
+# This can do less than Doxygen, but one thing it does better is that it parses PHP
+# function headers correctly and can document SQL CREATE TABLE statements.
 #
 # (C) 2015 Baubadil GmbH.
 #
