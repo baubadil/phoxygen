@@ -513,6 +513,11 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
             $htmlComment .= "</ol>";
         }
 
+        foreach my $tag ( qw( ol /ol ul /ul li /li ) )
+        {
+            $htmlComment =~ s/&lt;$tag&gt;/<$tag>/g;
+        }
+
         # Linkify all class names.
         foreach my $class (keys %g_aClasses)
         {
