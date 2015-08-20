@@ -665,7 +665,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
         my $c = 0;
         if (my $cLines = scalar(@$pll))
         {
-            $html .= "<pre>\n";
+            $html .= "\n<pre>\n";
             foreach my $line (@$pll)
             {
                 ++$c;
@@ -681,7 +681,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
 
                 $html .= "$htmlLine\n";
             }
-            $html .= "</pre>";
+            $html .= "\n</pre>\n";
         }
 
         return $html;
@@ -871,7 +871,8 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
                     $htmlBody .= "</i></td></tr>";
                 }
             }
-            $htmlBody .= "</table>";
+            $htmlBody .= "</table>"
+                if ($fLong);
         }
 
         return $htmlBody;
@@ -880,7 +881,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
 
 ###############################################################################################
 #
-# MAIN CODE
+# MAIN CODE -- PARSER
 #
 ###############################################################################################
 
@@ -1166,12 +1167,16 @@ foreach my $identifier (qw( XMLReader Exception ))
 }
 
 
+###############################################################################################
 #
-# WRITE DOCUMENTATION FILES
+# MAIN CODE -- WRITE OUTPUT FILES
 #
+###############################################################################################
 
 my $dirHTMLOut = 'doc/html';
+my $dirLatexOut = 'doc/latex';
 `mkdir -p $dirHTMLOut`;
+`mkdir -p $dirLatexOut`;
 
 if (!$g_pMainPage)
 {
@@ -1179,16 +1184,64 @@ if (!$g_pMainPage)
                                         title => 'Main page' );
 }
 
+my $htmlTitle = $g_pMainPage->formatTitle();
+my $g_title = html2Latex($htmlTitle);
+
+my $fullfile = "$dirLatexOut/index.tex";
+open(LATEX, "> $fullfile")
+    or myDie("cannot open $fullfile for writing: $!");
+print LATEX '
+\documentclass[oneside,a4paper,10pt,DIV10]{scrbook}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[pdftex,
+            a4paper,
+            bookmarksnumbered,
+            bookmarksopen=true,
+            bookmarksopenlevel=0,
+            colorlinks=true,
+            hyperfootnotes=false,
+            linkcolor=blue,
+            plainpages=false,
+            pdfpagelabels,
+            urlcolor=darkgreen
+  ]{hyperref}
+\usepackage{underscore}
+
+% Fonts
+% \usepackage{gentium}
+% \usepackage{libertine}
+\usepackage{paratype} 
+\usepackage{helvet}
+\usepackage[scaled]{beramono}
+
+% \renewcommand*\familydefault{\ttdefault}
+
+\newcommand\mytitle{'.$g_title.'}
+
+\title{\mytitle}
+\hypersetup{pdftitle=\mytitle}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+';
+
 funcEnter("writing main page");
 
 bless($g_pMainPage, 'MainPageComment');
-my $htmlTitle = $g_pMainPage->formatTitle();
 my $html = "<h1>$htmlTitle</h1>\n";
-$html .= $g_pMainPage->formatComment();
+my $htmlThis = $g_pMainPage->formatComment();
+$html .= $htmlThis;
 writeHTML($dirHTMLOut,
           'index.html',
           $htmlTitle,
           $html);
+
+print LATEX "\n\\chapter{".html2Latex($htmlTitle)."}\n";
+print LATEX "\n".html2Latex($htmlThis)."\n";
 
 funcLeave();
 
@@ -1215,18 +1268,24 @@ writeHTML($dirHTMLOut,
           $htmlTitle,
           $htmlBody);
 
+print LATEX "\n\\chapter{Pages}\n";
+
 foreach my $pageID (sort keys %g_aPages)
 {
     my $pPage = $g_aPages{$pageID};
     my $htmlTitle = toHTML($pPage->title);
     my $htmlBody = "<h1>$htmlTitle</h1>\n";
 
-    $htmlBody .= $pPage->formatComment();
+    $htmlThis = $pPage->formatComment();
+    $htmlBody .= $htmlThis;
 
     writeHTML($dirHTMLOut,
               "page_$pageID.html",
               $htmlTitle,
               $htmlBody);
+
+    print LATEX "\n\\section{".html2Latex($htmlTitle)."}\n";
+    print LATEX "\n".html2Latex($htmlThis)."\n";
 }
 
 funcLeave();
@@ -1254,18 +1313,25 @@ writeHTML($dirHTMLOut,
           $htmlTitle,
           $htmlBody);
 
+print LATEX "\n\\chapter{Tables}\n";
+
 foreach my $table (sort keys %g_aTables)
 {
     my $pTable = $g_aTables{$table};
 
     my $htmlTitle = $pTable->formatTitle();
     my $htmlBody = "<h1>$htmlTitle</h1>\n";
-    $htmlBody .= $pTable->formatComment();
+
+    $htmlThis = $pTable->formatComment();
+    $htmlBody .= $htmlThis;
 
     writeHTML($dirHTMLOut,
               "table_$table.html",
               $htmlTitle,
               $htmlBody);
+
+    print LATEX "\n\\section{".html2Latex($htmlTitle)."}\n";
+    print LATEX "\n".html2Latex($htmlThis)."\n";
 }
 
 funcLeave();
@@ -1277,7 +1343,8 @@ funcLeave();
 funcEnter("Writing class list");
 
 $htmlTitle = "Class list";
-$htmlBody = "<h1>$htmlTitle</h1>\n\n<ul>";
+$htmlBody = "<h1>$htmlTitle</h1>\n\n";
+$htmlThis = '<ul>';
 
 # Resolve children.
 foreach my $class (sort keys %g_aClasses)
@@ -1309,21 +1376,25 @@ foreach my $class (sort keys %g_aClasses)
     myLog("$cParents parents");
     if (!$cParents)
     {
-        $htmlBody .= "<li><a href=\"class_$class.html\">$class</a>";
+        $htmlThis .= "<li><a href=\"class_$class.html\">$class</a>";
 
-        $htmlBody .= $pClass->formatChildrenList();
+        $htmlThis .= $pClass->formatChildrenList();
 
-        $htmlBody .= "</li>\n";
+        $htmlThis .= "</li>\n";
     }
     funcLeave();
 }
 
-$htmlBody .= "</ul>";
+$htmlThis .= "</ul>";
 
+$htmlBody .= $htmlThis;
 writeHTML($dirHTMLOut,
           "index_classes.html",
           $htmlTitle,
           $htmlBody);
+
+print LATEX "\n\\chapter{Class list}\n";
+print LATEX "\n".html2Latex($htmlThis)."\n";
 
 funcLeave();
 
@@ -1339,16 +1410,22 @@ foreach my $class (keys %g_aClasses)
 
     my $htmlTitle = $pClass->formatTitle();
     my $htmlBody = "<h1>$htmlTitle</h1>\n";
-    $htmlBody .= $pClass->formatComment();
+
+    $htmlThis = $pClass->formatComment();
+    $htmlBody .= $htmlThis;
+
+    print LATEX "\n\\section{".html2Latex($htmlTitle)."}\\label{class-$class}\n";
+    print LATEX "\n".html2Latex($htmlThis)."\n";
 
     $htmlBody .= "<h2>Hierarchy</h2>\n\n";
+    $htmlThis = '';
     my $pllParents = $pClass->parents;
     my $pllChildren = $pClass->children;
     if (scalar @$pllParents)
     {
         foreach my $parent (@$pllParents)
         {
-            $htmlBody .= "<a href=\"class_$parent.html\">$parent</a> &mdash; ";
+            $htmlThis .= "<a href=\"class_$parent.html\">$parent</a> &mdash; ";
         }
     }
 
@@ -1356,25 +1433,30 @@ foreach my $class (keys %g_aClasses)
          || (scalar @$pllChildren)
        )
     {
-        $htmlBody .= "<b>$class</b>";
+        $htmlThis .= "<b>$class</b>";
     }
     else
     {
-        $htmlBody .= "<p>This class stands alone and has neither parents nor children.</p>";
+        $htmlThis .= "<p>This class stands alone and has neither parents nor children.</p>";
     }
 
     if (scalar @$pllChildren)
     {
-        $htmlBody .= ' &mdash; ';
+        $htmlThis .= ' &mdash; ';
         my $c = 0;
         foreach my $pChild (@$pllChildren)
         {
-            $htmlBody .= ", " if ($c);
+            $htmlThis .= ", " if ($c);
             my $child = $pChild->identifier;
-            $htmlBody .= "<a href=\"class_$child.html\">$child</a>";
+            $htmlThis .= "<a href=\"class_$child.html\">$child</a>";
             ++$c;
         }
     }
+
+    $htmlBody .= $htmlThis;
+
+    print LATEX "\n\\subsection{Hierarchy}\n";
+    print LATEX "\n".html2Latex($htmlThis)."\n";
 
     my $pllMembers = $pClass->pllMembers;
     my $cMembers = scalar(@$pllMembers);
@@ -1383,28 +1465,38 @@ foreach my $class (keys %g_aClasses)
     {
         $htmlBody .= "<h2>$cMembers members</h2>\n\n";
 
-        $htmlBody .= "<ul>\n";
+        print LATEX "\n\\subsection{Members}\n";
+
+        $htmlThis = "<ul>\n";
         foreach my $pMemberFunction (@$pllMembers)
         {
             my $identifier = $pMemberFunction->identifier;
-            $htmlBody .= "<li><a href=\"#$identifier\">";
-            $htmlBody .= $pMemberFunction->formatFunction(0); # short
-            $htmlBody .= "</a></li>";
-            $htmlBody .= "\n";
+            $htmlThis .= "<li><a href=\"#$identifier\">";
+            $htmlThis .= $pMemberFunction->formatFunction(0); # short
+            $htmlThis .= "</a></li>";
+            $htmlThis .= "\n";
         }
-        $htmlBody .= "</ul>\n";
+        $htmlThis .= "</ul>\n";
+
+        $htmlBody .= $htmlThis;
 
         $htmlBody .= "\n<h2>Details</h2>\n";
+        $htmlThis = '';
 
         foreach my $pMemberFunction (@$pllMembers)
         {
             my $identifier = $pMemberFunction->identifier;
-            $htmlBody .= "<dl><dt id=\"$identifier\">";
-            $htmlBody .= $pMemberFunction->formatFunction(1)."</dt>\n";
-            $htmlBody .= "<dd>".$pMemberFunction->formatComment()."</dd></dl>";
-            $htmlBody .= "\n";
+            $htmlThis .= "<dl><dt id=\"$identifier\">";
+            $htmlThis .= $pMemberFunction->formatFunction(1)."</dt>\n";
+            my $htmlDesc = $pMemberFunction->formatComment();
+            $htmlThis .= "<dd>".$htmlDesc."</dd></dl>";
+            $htmlThis .= "\n";
+
+            print LATEX "\n\\subsubsection{".html2Latex($pMemberFunction->formatFunction(0))."}\n";
+            print LATEX "\n".html2Latex($htmlDesc)."\n";
         }
 
+        $htmlBody .= $htmlThis;
     }
 
     writeHTML($dirHTMLOut,
@@ -1414,6 +1506,14 @@ foreach my $class (keys %g_aClasses)
 }
 
 funcLeave();
+
+print LATEX '
+\end{document}
+';
+
+close LATEX;
+
+exit 0;
 
 ###############################################################################################
 #
@@ -1427,6 +1527,48 @@ sub toHTML
     $str =~ s/&/&amp;/g;
     $str =~ s/</&lt;/g;
     $str =~ s/>/&gt;/g;
+    return $str;
+}
+
+sub html2Latex
+{
+    my ($str) = @_;
+#     $str =~ s/&/&amp;/g;
+#     $str =~ s/</&lt;/g;
+#     $str =~ s/>/&gt;/g;
+
+    $str =~ s/<\/?p>//g;
+
+    $str =~ s/<ul>/\\begin{itemize}\n/g    ;
+    $str =~ s/<\/ul>/\n\\end{itemize}/g;
+    $str =~ s/<ol>/\\begin{enumerate}\n/g;
+    $str =~ s/<\/ol>/\n\\end{enumerate}/g;
+    $str =~ s/<li>/\\item /g;
+    $str =~ s/<\/li>//g;
+
+    $str =~ s/<pre>/\\begin{verbatim}/g    ;
+    $str =~ s/<\/pre>/\\end{verbatim}/g;
+
+    $str =~ s/<code>/\\texttt{/g;
+    $str =~ s/<\/code>/}/g;
+    $str =~ s/<b>/\\textbf{/g;
+    $str =~ s/<\/b>/}/g;
+
+    $str =~ s/<a href="class_([^"]+)\.html">[^<]+<\/a>/\\hyperref[class-$1]{$1}/g;
+#               <a href="class_Access.html">Access</a>
+    $str =~ s/<a [^>]+>//g;
+    $str =~ s/<\/a>//g;
+#     $str =~ s/_/{\\_}/g;
+
+    $str =~ s/&mdash;/--/g;
+    $str =~ s/&nbsp;/~/g;
+    $str =~ s/&lt;/</g;
+    $str =~ s/&gt;/>/g;
+    $str =~ s/&amp;/&/g;
+    $str =~ s/\$/\\\$/g;
+    $str =~ s/#/\\#/g;
+    $str =~ s/&/\\&/g;
+
     return $str;
 }
 
