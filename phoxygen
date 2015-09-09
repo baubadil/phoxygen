@@ -1011,7 +1011,7 @@ foreach my $inputFile (@llInputFiles)
                 }
                 elsif (/\\page/)
                 {
-                    my ($pageID, $pageTitle) = /\\page\s+([a-zA-Z0-9_]+)\s+(.*)/;
+                    my ($pageID, $pageTitle) = /\\page\s+([a-zA-Z0-9_-]+)\s+(.*)/;
 
                     if (!$pageTitle)
                     {
@@ -1212,7 +1212,7 @@ print LATEX '
 % Fonts
 % \usepackage{gentium}
 % \usepackage{libertine}
-\usepackage{paratype} 
+\usepackage{paratype}
 \usepackage{helvet}
 \usepackage[scaled]{beramono}
 
