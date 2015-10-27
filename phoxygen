@@ -454,7 +454,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
 
                         $line =~ s/^\s+(?:--?|\*)\s+/ /;
                     }
-                    elsif ($line =~ /^\s+\d[.)]\s+/)
+                    elsif ($line =~ /^\s+\d+[.)]\s+/)
                     {
                         if ($paraState != PARAGRAPH_OL)
                         {
@@ -468,7 +468,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
                         $htmlComment .= "<li>";
                         $paraState = PARAGRAPH_OL;
 
-                        $line =~ s/^\s+\d[.)]\s+/ /;
+                        $line =~ s/^\s+\d+[.)]\s+/ /;
                     }
                     else
                     {
@@ -1112,7 +1112,7 @@ foreach my $inputFile (@llInputFiles)
 
                 $pLastFunction->processInputLine($afterOpeningBracket, \$state);
             }
-            elsif ( my ($identifier) = /\s*CREATE\s+TABLE\s+([A-Za-z_]+)/ )
+            elsif ( my ($identifier) = /\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([A-Za-z_]+)/ )
             {
                 #
                 # STORE TABLE
