@@ -362,6 +362,7 @@ use Data::Dumper;
 my %g_aClasses;                   # comment, type = class/interface, implements, extends
 my %g_aPages;
 my %g_aTables;
+my %g_aRESTComments;
 my $g_pMainPage;
 
 use constant STATE_INIT                             => 0;
@@ -381,6 +382,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
     use constant FLTYPE_CLASS                           => 0x04;
     use constant FLTYPE_FUNCTION                        => 0x08;
     use constant FLTYPE_TABLE                           => 0x10;
+    use constant FLTYPE_REST                            => 0x20;
 
     has 'type'      => ( isa => 'Int', is => 'rw', init_arg => 0 );
     has 'keyword'   => ( isa => 'Str', is => 'ro' );
@@ -618,6 +620,27 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
 }
 
 {
+    package RESTComment;
+    use Moose;
+    extends 'DocComment';
+
+    has 'method'    => ( isa => 'Str', is => 'rw' );
+    has 'name'      => ( isa => 'Str', is => 'rw' );
+
+    sub BUILD
+    {
+        my ($self) = @_;
+        $self->type(DocComment::FLTYPE_REST);
+    }
+
+    sub formatTitle
+    {
+        my ($self) = @_;
+        return "REST API <code>".$self->identifier."</code>";
+    }
+}
+
+{
     package TableComment;
     use Moose;
     extends 'DocComment';
@@ -788,6 +811,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
     {
         my ($self, $line, $pState) = @_;
 
+        # ::myLog("function line: $line");
         if ( (my $param, my $sep, my $descr) = $line =~ /^\s*([&\$A-Za-z0-9_ ='"-]+)\s*([,;)])\s*(?:\/\/!<\s*(.*))?$/)
         {
             my $oldstate = $$pState;
@@ -916,6 +940,7 @@ if (!@llInputFiles)
     while (<FIND>)
     {
         chomp;
+        next if /\/3rdparty\//;
         push @llInputFiles, $_;
     }
     close FIND;
@@ -940,7 +965,7 @@ foreach my $inputFile (@llInputFiles)
 
     my $strCurrentComment = '';
     my $linenoWhereCommentBegan;
-    my $linenoWhereCommentEnded;
+    my $linenoWhereCommentEnded = 0;
     my $pLastFunction;
     my $pLastTable;
     my $pCurrentClass;
@@ -1112,7 +1137,7 @@ foreach my $inputFile (@llInputFiles)
 
                 $pLastFunction->processInputLine($afterOpeningBracket, \$state);
             }
-            elsif ( my ($identifier) = /\s*CREATE\s+TABLE\s+([A-Za-z_]+)/ )
+            elsif ( my ($identifier) = /^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([A-Za-z_]+)/ )
             {
                 #
                 # STORE TABLE
@@ -1129,6 +1154,28 @@ foreach my $inputFile (@llInputFiles)
                 $state = STATE_IN_CREATE_TABLE;
 
                 $pLastTable->processInputLine($_, \$state);
+            }
+            elsif ( my ($method, $nameAndArgs) = /^\s*\S+->(get|post)\(["'"](.*)["'"],/ )
+            {
+                #
+                # STORE REST API
+                #
+                my ($name, $args) = ($nameAndArgs =~ /\/([^\/]+)(\/.*)?/);
+                my $identifier = $method.'_'.$name;
+                myLog("line $linenoWhereCommentBegan: found REST API $method, $name => $identifier");
+
+                $pCurrent = RESTComment->new(      method      => uc($method),
+                                                   name        => $name,
+                                                   identifier  => $identifier,
+                                                   args        => $args,
+                                                   comment     => $strCurrentComment,
+                                                   file        => $inputFile,
+                                                   lines       => "$linenoWhereCommentBegan--$linenoWhereCommentEnded"
+                                                );
+                $g_aRESTComments{$identifier} = $pCurrent;
+                $state = STATE_INIT;
+
+                # $pLastTable->processInputLine($_, \$state);
             }
             elsif ($cLinesExamined < 2)
             {
@@ -1281,6 +1328,52 @@ foreach my $pageID (sort keys %g_aPages)
 
     writeHTML($dirHTMLOut,
               "page_$pageID.html",
+              $htmlTitle,
+              $htmlBody);
+
+    print LATEX "\n\\section{".html2Latex($htmlTitle)."}\n";
+    print LATEX "\n".html2Latex($htmlThis)."\n";
+}
+
+funcLeave();
+
+
+#
+# REST API files.
+#
+
+funcEnter("writing REST APIs");
+
+$htmlTitle = "REST APIs list";
+$htmlBody = "<h1>$htmlTitle</h1>\n\n<ul>";
+
+foreach my $restapi (sort keys %g_aRESTComments)
+{
+    my $pREST = $g_aRESTComments{$restapi};
+    $htmlBody .= "<li><a href=\"rest_$restapi.html\">".$pREST->method.' '.$pREST->name."</a>";
+}
+
+$htmlBody .= "</ul>\n";
+
+writeHTML($dirHTMLOut,
+          "index_restapis.html",
+          $htmlTitle,
+          $htmlBody);
+
+print LATEX "\n\\chapter{REST APIs}\n";
+
+foreach my $restapi (sort keys %g_aRESTComments)
+{
+    my $pREST = $g_aRESTComments{$restapi};
+
+    my $htmlTitle = $pREST->formatTitle();
+    my $htmlBody = "<h1>$htmlTitle</h1>\n";
+
+    $htmlThis = $pREST->formatComment();
+    $htmlBody .= $htmlThis;
+
+    writeHTML($dirHTMLOut,
+              "rest_$restapi.html",
               $htmlTitle,
               $htmlBody);
 
@@ -1601,7 +1694,11 @@ sub writeHTML
   </style>
 </head>
 <body>
-<a href="index.html">Home</a> &mdash; <a href="index_pages.html">Topics</a> &mdash; <a href="index_classes.html">Classes</a> &mdash; <a href="index_tables.html">Tables</a>
+<a href="index.html">Home</a> &mdash; 
+<a href="index_pages.html">Topics</a> &mdash; 
+<a href="index_restapis.html">REST APIs</a> &mdash; 
+<a href="index_classes.html">Classes</a> &mdash; 
+<a href="index_tables.html">Tables</a>
 <hr>
 $htmlBody
 </body>
