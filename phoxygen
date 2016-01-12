@@ -456,7 +456,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
 
                         $line =~ s/^\s+(?:--?|\*)\s+/ /;
                     }
-                    elsif ($line =~ /^\s+\d[.)]\s+/)
+                    elsif ($line =~ /^\s+\d+[.)]\s+/)
                     {
                         if ($paraState != PARAGRAPH_OL)
                         {
@@ -470,7 +470,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
                         $htmlComment .= "<li>";
                         $paraState = PARAGRAPH_OL;
 
-                        $line =~ s/^\s+\d[.)]\s+/ /;
+                        $line =~ s/^\s+\d+[.)]\s+/ /;
                     }
                     else
                     {
