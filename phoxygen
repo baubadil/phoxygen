@@ -910,7 +910,7 @@ while (my $this = myGetOpt(\@ARGV, \%g_aOptionDefs, undef, undef, undef))
 
 if (!@llInputFiles)
 {
-    my $cmd = 'find . -name "*.php"';
+    my $cmd = 'find cli/ htdocs/ -name "*.php"';
     open(FIND, "$cmd |")
         or myDie("failed to run \"$cmd\": $!");
     while (<FIND>)
