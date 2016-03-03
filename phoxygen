@@ -540,7 +540,10 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
         $htmlComment =~ s/\\ref\s+([a-zA-Z_0-9]+::[a-zA-Z_0-9]+\(\))/resolveFunctionRef($1)/eg;
 
         # Resolve \refs to page IDs.
-        $htmlComment =~ s/\\ref\s+([a-zA-Z_0-9]+)/resolvePlainRef($1)/eg;
+        $htmlComment =~ s/\\ref\s+([-a-zA-Z_0-9]+)/resolvePlainRef($1)/eg;
+
+        # Linkify REST API references.
+        $htmlComment =~ s/(GET|POST|PUT|DELETE)\s+\/([-a-zA-Z]+)\s+REST/resolveRESTRef($1, $2)/eg;
 
         return $htmlComment;
     }
@@ -584,7 +587,23 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
         {
             return "<a href=\"table_$id.html\">$id</a>";
         }
+        elsif ($p = $g_aRESTComments{$id})
+        {
+            return "<a href=\"rest_$id.html\">$id</a>";
+        }
         ::myWarning("Invalid reference: page ID $id not found");
+        return $id;
+    }
+
+    sub resolveRESTRef
+    {
+        my ($method, $name) = @_;
+        my $id = lc($method).'_'.$name;
+        if (my $p = $g_aRESTComments{$id})
+        {
+            return "<a href=\"rest_$id.html\">$method /$name REST</a>";
+        }
+        ::myWarning("Invalid REST API reference: page ID $id not found");
         return $id;
     }
 }
