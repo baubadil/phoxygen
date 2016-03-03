@@ -1155,7 +1155,7 @@ foreach my $inputFile (@llInputFiles)
 
                 $pLastTable->processInputLine($_, \$state);
             }
-            elsif ( my ($method, $nameAndArgs) = /^\s*\S+->(get|post)\(["'"](.*)["'"],/ )
+            elsif ( my ($method, $nameAndArgs) = /^\s*\S+->(get|post|put|delete)\(["'"](.*)["'"],/ )
             {
                 #
                 # STORE REST API
