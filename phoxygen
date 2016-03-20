@@ -1174,13 +1174,13 @@ foreach my $inputFile (@llInputFiles)
 
                 $pLastTable->processInputLine($_, \$state);
             }
-            elsif ( my ($method, $nameAndArgs) = /^\s*\S+->(get|post|put|delete)\(["'"](.*)["'"],/ )
+            elsif ( my ($method, $nameAndArgs) = /^\s*\S+::(Get|Post|Put|Delete)\(["'"](.*)["'"],/ )
             {
                 #
                 # STORE REST API
                 #
                 my ($name, $args) = ($nameAndArgs =~ /\/([^\/]+)(\/.*)?/);
-                my $identifier = $name.'_'.$method;
+                my $identifier = $name.'_'.lc($method);
                 myLog("line $linenoWhereCommentBegan: found REST API $method, $name => $identifier");
 
                 $pCurrent = RESTComment->new(      method      => uc($method),
