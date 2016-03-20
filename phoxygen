@@ -598,7 +598,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
     sub resolveRESTRef
     {
         my ($method, $name) = @_;
-        my $id = lc($method).'_'.$name;
+        my $id = $name.'_'.lc($method);
         if (my $p = $g_aRESTComments{$id})
         {
             return "<a href=\"rest_$id.html\">$method /$name REST</a>";
@@ -655,7 +655,7 @@ use constant STATE_IN_CREATE_TABLE                  => 6;
     sub formatTitle
     {
         my ($self) = @_;
-        return "REST API <code>".$self->identifier."</code>";
+        return "<code>".$self->method.' /api/'.$self->name."</code> REST API";
     }
 }
 
@@ -953,7 +953,7 @@ while (my $this = myGetOpt(\@ARGV, \%g_aOptionDefs, undef, undef, undef))
 
 if (!@llInputFiles)
 {
-    my $cmd = 'find cli/ htdocs/ -name "*.php"';
+    my $cmd = 'find . -name "*.php" -not -path "./3rdparty/*" -not -path "./htdocs/3rdparty/*"';
     open(FIND, "$cmd |")
         or myDie("failed to run \"$cmd\": $!");
     while (<FIND>)
@@ -1180,7 +1180,7 @@ foreach my $inputFile (@llInputFiles)
                 # STORE REST API
                 #
                 my ($name, $args) = ($nameAndArgs =~ /\/([^\/]+)(\/.*)?/);
-                my $identifier = $method.'_'.$name;
+                my $identifier = $name.'_'.$method;
                 myLog("line $linenoWhereCommentBegan: found REST API $method, $name => $identifier");
 
                 $pCurrent = RESTComment->new(      method      => uc($method),
@@ -1369,7 +1369,7 @@ $htmlBody = "<h1>$htmlTitle</h1>\n\n<ul>";
 foreach my $restapi (sort keys %g_aRESTComments)
 {
     my $pREST = $g_aRESTComments{$restapi};
-    $htmlBody .= "<li><a href=\"rest_$restapi.html\">".$pREST->method.' '.$pREST->name."</a>";
+    $htmlBody .= "<li><a href=\"rest_$restapi.html\">".$pREST->method.' /api/'.$pREST->name."</a>";
 }
 
 $htmlBody .= "</ul>\n";
@@ -1698,6 +1698,7 @@ sub writeHTML
     print HTML <<"EOD";
 <html>
 <head>
+  <meta charset="UTF-8"> 
   <title>$title &mdash; Doreen documentation</title>
   <style>
 .functable
