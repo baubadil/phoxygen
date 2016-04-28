@@ -2,7 +2,7 @@
 A quick and dirty documentation tool for PHP code, written in Perl. Accepts doxygen-like tags in the PHP source code.
 
 This can do less than Doxygen, but one thing it does better is that it parses PHP
-function headers correctly and can document SQL CREATE TABLE statements.
+function headers correctly and can document SQL CREATE TABLE statements and REST APIs.
 
 ## Usage
 
@@ -21,7 +21,7 @@ such as PHPStorm, which also understand those tags.
 It can document classes and functions like the other two if you precede the class or function declaration with a doc block.
 A doc block is a standard C-style comment with two leading stars, like this: `/** ... docblock ... */` and can span multiple lines.
 
-In addition to PHPDoc, phoxygen understands doxygen-like function argument documentation, which spares you some typing, like so:
+In addition to PHPDoc, phoxygen understands doxygen-like **function argument** documentation, which spares you some typing, like so:
 
 ```
 /** 
@@ -32,7 +32,6 @@ function myFunction($arg1, 		//!< description of arg1
 {
 	...
 }
-
 ```
 
 This is equivalent to writing out a @param block for each of the arguments.
@@ -40,8 +39,37 @@ This is equivalent to writing out a @param block for each of the arguments.
 In addition to both PHPDoc and doxygen, you can also document SQL table definitions and REST APIs, which will be listed in 
 separate blocks in the resulting documentation.
 
-Any `/** ... */` in front of a line that contains the string `CREATE TABLE` is considered an SQL table documentation.
+Any `/** ... */` in front of a line that contains the string `CREATE TABLE` is considered an **SQL table documentation.**
 
 Any `/** ... */` in front of a line that matches the regular expression `^\s*\S+::(Get|Post|Put|Delete)\(["'"](.*)["'"],`
-is considered a REST API. This is for frameworks like Slim that use those method calls to define REST API handlers.
+is considered a **REST API.** This is for frameworks like Slim that use those method calls to define REST API handlers.
 
+
+## Formatting
+
+Formatting is very limited. Right now we only understand ordered and unordered lists, really, like with Markup.
+
+
+## Linking from other docblocks
+
+Any mention of a documented class name in a doc block will automatically be linkified in other docblocks. For example,
+if you have documented a class named `MyClass`, just writing MyClass in other doc blocks will turn such mentiones into
+a link to the MyClass documentation page. This is handy but you might not want to document a class name like "out" 
+because it would linkify that word everywhere.
+
+Function names are not yet resolved.
+
+Any occurence of the form "GET|POST|PUT|DELETE /foo REST API" will be turned into a link to the corresponding REST API,
+if it is known.
+
+Table links are not automatically converted. To create a link to a documented table, use `\ref tablename` (with tablename
+being the same that was used in the `CREATE TABLE` statement that you documented).
+
+
+## Special pages
+
+As with doxygen, you can create special pages as docblock comments that have `@page identifier heading...` in their first
+line. This will store the docblock separately as a page, which can be refered with \ref from elsewhere. This allows you
+to write longer explanations that do not pertain to an individual class or function, for example to explain how your
+authentication works, and then reference that explanation from related classes, methods, tables and REST APIs. These
+pages are listed under "Topics" in the HTML output.
