@@ -960,6 +960,7 @@ if (!@llInputFiles)
     {
         chomp;
         next if /\/3rdparty\//;
+        next if /\/vendor\//;
         push @llInputFiles, $_;
     }
     close FIND;
