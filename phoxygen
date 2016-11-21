@@ -953,7 +953,7 @@ while (my $this = myGetOpt(\@ARGV, \%g_aOptionDefs, undef, undef, undef))
 
 if (!@llInputFiles)
 {
-    my $cmd = 'find . -name "*.php" -not -path "./3rdparty/*" -not -path "./htdocs/3rdparty/*"';
+    my $cmd = 'find -L . -name "*.php" -not -path "./3rdparty/*" -not -path "./htdocs/3rdparty/*"';
     open(FIND, "$cmd |")
         or myDie("failed to run \"$cmd\": $!");
     while (<FIND>)
@@ -1640,6 +1640,10 @@ sub toHTML
     $str =~ s/&/&amp;/g;
     $str =~ s/</&lt;/g;
     $str =~ s/>/&gt;/g;
+
+    # Permit some HTML tags.
+    $str =~ s/&lt;(\/?[bi])&gt;/<\1>/g;
+
     return $str;
 }
 
@@ -1699,7 +1703,7 @@ sub writeHTML
     print HTML <<"EOD";
 <html>
 <head>
-  <meta charset="UTF-8"> 
+  <meta charset="UTF-8">
   <title>$title &mdash; Doreen documentation</title>
   <style>
 .functable
@@ -1715,10 +1719,10 @@ sub writeHTML
   </style>
 </head>
 <body>
-<a href="index.html">Home</a> &mdash; 
-<a href="index_pages.html">Topics</a> &mdash; 
-<a href="index_restapis.html">REST APIs</a> &mdash; 
-<a href="index_classes.html">Classes</a> &mdash; 
+<a href="index.html">Home</a> &mdash;
+<a href="index_pages.html">Topics</a> &mdash;
+<a href="index_restapis.html">REST APIs</a> &mdash;
+<a href="index_classes.html">Classes</a> &mdash;
 <a href="index_tables.html">Tables</a>
 <hr>
 $htmlBody
