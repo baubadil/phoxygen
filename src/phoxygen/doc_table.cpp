@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -16,7 +16,7 @@
 
 TablesMap g_mapTables;
 
-/* static */ 
+/* static */
 PTableComment TableComment::Make(const string &strIdentifier,
                                  const string &strComment,
                                  const string &strInputFile,
@@ -32,7 +32,7 @@ PTableComment TableComment::Make(const string &strIdentifier,
     auto p = make_shared<Derived>(strIdentifier, strComment, strInputFile, linenoFirst, linenoLast);
     g_mapTables[strIdentifier] = p;
     return p;
-    
+
 }
 
 void TableComment::processInputLine(const string &strLine,
@@ -46,11 +46,11 @@ void TableComment::processInputLine(const string &strLine,
         state = State::INIT;
 }
 
-/* virtual */ 
-string TableComment::formatComment() /* override */ 
+/* virtual */
+string TableComment::formatComment() /* override */
 {
     string html = CommentBase::formatComment();
-    
+
     size_t cLines = _vDefinitionLines.size();
     if (cLines)
     {
@@ -62,14 +62,14 @@ string TableComment::formatComment() /* override */
             html += "    ";
             if ( (c > 1) && (c < cLines) )
                 html += "    ";
-                
+
             string htmlLine = toHTML(line);
-            
+
             for (auto it : g_mapTables)
             {
                 const string &strTable = it.first;
                 Regex reTableRef("REFERENCES\\s+" + strTable + "\\(");
-                reTableRef.findReplace(htmlLine, 
+                reTableRef.findReplace(htmlLine,
                                        "REFERENCES <a href=\"table_" + strTable + ".html\">" + strTable + "</a>(",
                                        true);   // fGlobal
             }
@@ -79,11 +79,21 @@ string TableComment::formatComment() /* override */
         html += "\n</pre>\n";
     }
 
-    return html;    
+    return html;
 }
 
-/* static */ 
+/* static */
 const TablesMap& TableComment::GetAll()
 {
     return g_mapTables;
+}
+
+/* static */
+PTableComment TableComment::Find(const string &strTable)
+{
+    auto it = g_mapTables.find(strTable);
+    if (it != g_mapTables.end())
+        return it->second;
+
+    return NULL;
 }

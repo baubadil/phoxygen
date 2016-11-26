@@ -35,9 +35,7 @@ const string dirHTMLOut = "doc/html";
 const string dirLatexOut = "doc/latex";
 
 PMainPageComment g_pMainPage;
-PagesMap g_mapPages;
 RESTMap g_mapRESTComments;
-
 
 void parseSources(StringVector &vFilenames)
 {
@@ -150,12 +148,11 @@ void parseSources(StringVector &vFilenames)
                         state = State::IN_DOCCOMMENT_PAGE;
                         Debug::Log(MAIN, "line $linenoWhereCommentBegan: found \\page $pageID with title \"$pageTitle\" (state=$state)");
 
-                        auto p = make_shared<PageComment>(pageID,
-                                                          pageTitle,
-                                                          strInputFile,
-                                                          linenoWhereCommentBegan,
-                                                          linenoWhereCommentEnded);
-                        g_mapPages[pageID] = p;
+                        auto p = PageComment::Make(pageID,
+                                                   pageTitle,
+                                                   strInputFile,
+                                                   linenoWhereCommentBegan,
+                                                   linenoWhereCommentEnded);
                         pCurrent = p;
                     }
                     else
@@ -371,12 +368,10 @@ void writePages()
     string htmlTitle = "Pages list";
     string htmlBody = "<h1>" + htmlTitle + "</h1>\n\n<ul>";
 
-    for (auto it : g_mapPages)
+    for (auto it : PageComment::GetAll())
     {
-        const string &strPageID = it.first;
         auto pPage = it.second;
-        string strTitle = toHTML(pPage->getTitle());
-        htmlBody += "<li><a href=\"page_" + strPageID + ".html\">" + strTitle + "</a>";
+        htmlBody += "<li>" + pPage->makeLink();
     }
 
     htmlBody += "</ul>\n";
@@ -386,7 +381,7 @@ void writePages()
                               htmlTitle,
                               htmlBody);
 
-    for (auto it : g_mapPages)
+    for (auto it : PageComment::GetAll())
     {
         const string &strPageID = it.first;
         auto pPage = it.second;
@@ -455,9 +450,9 @@ void writeTables()
 
     for (auto it : TableComment::GetAll())
     {
-        const string &strTable = it.first;
+        // const string &strTable = it.first;
         auto pTable = it.second;
-        htmlBody += "<li><a href=\"table_" + strTable + ".html\">" + strTable + "</a>";
+        htmlBody += "<li>" + pTable->makeLink();;
     }
 
     htmlBody += "</ul>\n";

@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -143,7 +143,7 @@ public:
 
 class PageComment : public CommentBase
 {
-public:
+protected:
     PageComment(const string &strPageID,
                 const string &strTitle,
                 const string &strInputFile,
@@ -159,16 +159,32 @@ public:
     {
         _title = strTitle;
     }
-    
+
+public:
+    static PPageComment Make(const string &strPageID,
+                             const string &strTitle,
+                             const string &strInputFile,
+                             int linenoFirst,
+                             int linenoLast);
+
     const string& getTitle()
     {
         return _title;
     }
-    
+
     virtual string formatTitle()
     {
         return toHTML(_title);
     }
+
+    string makeLink()
+    {
+        return "<a href=\"page_" + _identifier + ".html\">" + formatTitle() + "</a>";
+    }
+
+    static const PagesMap& GetAll();
+
+    static PPageComment Find(const string &strPage);
 };
 
 
@@ -211,7 +227,7 @@ class RESTComment : public CommentBase
     string _strMethod;
     string _strName;
     string _strArgs;
-    
+
 public:
     RESTComment(const string &strMethod,
                 const string &strName,
@@ -228,22 +244,22 @@ public:
                       strInputFile,
                       linenoFirst,
                       linenoLast)
-    { 
+    {
         _strMethod = strMethod;
         _strName = strName;
         _strArgs = strArgs;
     }
-    
+
     virtual string formatTitle()
     {
         return "<code>" + _strMethod + " /api/" + _strName + "</code> REST API";
     }
-    
+
     string makeHREF()
     {
-        return "rest_" + getIdentifier() + ".html";        
+        return "rest_" + getIdentifier() + ".html";
     }
-    
+
     string makeLink()
     {
         return "<a href=\"" + makeHREF() + "\">" + _strMethod + " /api/" + _strName + "</a>";
@@ -281,17 +297,24 @@ public:
                               const string &strInputFile,
                               int linenoFirst,
                               int linenoLast);
-    
+
     void processInputLine(const string &strLine, State &state);
-    
+
     virtual string formatTitle()
     {
         return "Table <code>" + _identifier + "</code>";
     }
-    
+
     virtual string formatComment() override;
-    
+
+    string makeLink()
+    {
+        return "<a href=\"table_" + _identifier + ".html\">" + _identifier + "</a>";
+    }
+
     static const TablesMap& GetAll();
+
+    static PTableComment Find(const string &strTable);
 };
 
 
@@ -311,10 +334,10 @@ class ClassComment : public CommentBase
 
     StringVector        _vImplements;
     StringVector        _vExtends;
-    
+
     // Regex for class linkification. Instantiate them in the class data so we don't have to recompile them.
     Regex               _reClass;
-    
+
     string              _strReplSelf;
     string              _strReplOther;
 
@@ -324,7 +347,7 @@ class ClassComment : public CommentBase
                  const string &strInputFile,
                  int linenoFirst,
                  int linenoLast);
-    
+
 public:
     static PClassComment Make(const string &strKeyword,
                               const string &strIdentifier,
@@ -347,14 +370,14 @@ public:
     {
         _vParents.push_back(str);
     }
-    
+
     void addChild(PClassComment pChild)
     {
         _vChildren.push_back(pChild);
     }
 
     void addMember(PFunctionComment pMember);
-    
+
     const StringVector& getParents()
     {
         return _vParents;
@@ -364,17 +387,17 @@ public:
     {
         return _vChildren;
     }
-    
+
     const FunctionsVector& getMembers()
     {
         return _vMembers;
     }
-    
+
     string formatChildrenList();
-    
+
     void linkify(string &htmlComment,
                  bool fSelf);
-    
+
     static const ClassesMap& GetAll();
 
     static PClassComment Find(const string &strClass);
@@ -419,7 +442,7 @@ public:
     void setClass(PClassComment pClass);
 
     void processInputLine(const string &strLine, State &state);
-    
+
     string formatFunction(bool fLong);
 };
 

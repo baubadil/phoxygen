@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -18,7 +18,7 @@ string CommentBase::formatContext()
     return _file + " (lines " + to_string(_linenoFirst) + "--" + to_string(_linenoLast) + ")";
 }
 
-/* virtual */ 
+/* virtual */
 string CommentBase::formatComment()
 {
     string htmlComment;
@@ -26,7 +26,7 @@ string CommentBase::formatComment()
     bool fPrependNewline = true;
 
     enum class PState
-    {   
+    {
         INIT,
         OPEN,
         UL,
@@ -87,7 +87,7 @@ string CommentBase::formatComment()
 
                     htmlComment += "<li>";
                     paraState = PState::OL;
-                    
+
                     static const Regex s_stripNumber(R"i____(^\s+\d+[.)]\s+)i____");
                     s_stripNumber.findReplace(line, " ", false);
                 }
@@ -159,9 +159,20 @@ string CommentBase::formatComment()
 
     // Resolve \refs to page IDs.
     static const Regex s_reResolveRefs(R"i____(\\ref\s+([-a-zA-Z_0-9]+))i____");
-    s_reResolveRefs.findReplace(htmlComment, 
-                                [](const string &strFound)
+    s_reResolveRefs.findReplace(htmlComment,
+                                [](const StringVector &vMatches, string &strReplace)
                                 {
+                                    PTableComment pTable;
+                                    PPageComment pPage;
+                                    if ((pTable = TableComment::Find(vMatches[1])))
+                                        strReplace = pTable->makeLink();
+                                    else if ((pPage = PageComment::Find(vMatches[1])))
+                                        strReplace = pPage->makeLink();
+                                    else
+                                    {
+                                        strReplace = "?!?!?!?";
+                                        Debug::Warning("Invalid \\ref " + vMatches[1]);
+                                    }
                                 },
                                 true);
     // $htmlComment =~ s/\\ref\s+([-a-zA-Z_0-9]+)/resolvePlainRef($1)/eg; TODO
