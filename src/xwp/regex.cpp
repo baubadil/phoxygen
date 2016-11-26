@@ -1,0 +1,380 @@
+/*
+ * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
+ * 
+ * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
+ * General Public License as published by the Free Software Foundation, in version 2 as it comes
+ * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the LICENSE file for more details.
+ */
+
+#include "xwp/regex.h"
+#include "xwp/except.h"
+#include "xwp/debug.h"
+#include "xwp/stringhelp.h"
+
+#include "pcre.h"
+
+const string& RegexMatches::get(uint u)
+{
+    if (v.empty())
+        throw FSException("Invalid index " + to_string(u) + " into EMPTY regex matches");
+        
+    if (u < v.size())
+        return v[u];
+    
+    string str = "Invalid index " + to_string(u) + " into regex matches (0: \"" + v[0] + "\")";
+    if (pRE)
+        str += " -- size was " + to_string(v.size()) + " -- RE: \"" + pRE->toString() + "\"";
+    throw FSException(str);
+}
+
+class Regex::Impl
+{
+public:
+    pcre        *_pRE = NULL;
+    pcre_extra  *_pPCREExtra = NULL; 
+    string      _str;
+
+    Impl(const string &str)
+        : _str(str)
+    {
+        const char *pcszError = NULL; 
+        int iOffset = 0;
+        if (!(_pRE = pcre_compile(str.c_str(), 
+                                  PCRE_UTF8 | PCRE_NO_UTF8_CHECK, // options   -- PCRE_CASELESS? PCRE_UCP PCRE_UNGREEDY 
+                                  &pcszError,
+                                  &iOffset,
+                                  NULL)))      // default character tables
+            throw FSException("Error compiling regular expression \"" + str + "\": " + string(pcszError));
+        
+        _pPCREExtra = pcre_study(_pRE, 
+                                 PCRE_STUDY_JIT_COMPILE,        // This option brings search/replace in phoxygen from six seconds down to one.
+                                 &pcszError); 
+    }
+    
+    ~Impl()
+    {
+        if (_pRE)
+        {
+            pcre_free(_pRE);
+            _pRE = NULL;
+        }
+        if (_pPCREExtra)
+        {
+            pcre_free(_pPCREExtra);
+            _pPCREExtra = NULL;
+        }
+    }
+    
+    int forEachMatch(const string &strHaystack,
+                     std::function<void (size_t i,
+                                         size_t first, 
+                                         size_t last)> fnMatch,
+                     int ofs);
+};
+
+/**
+ *  Calls fnMatch every time the implementation's PCRE matches strHaystack. With 
+ *  every call the callback receives the first and last offsets of the match.
+ * 
+ *  This calls the callback at least once for the entire match. If there are
+ *  captures, then this gets called again for every capture.
+ * 
+ *  If something was found, this returns the offset of the last match. If you want 
+ *  to keep going as with the perl /g modifier, call the function again with the 
+ *  return value as a new offset.
+ * 
+ *  If this returns 0 then nothing was found. A negative number is a PCRE error code.
+ */
+int Regex::Impl::forEachMatch(const string &strHaystack,
+                              std::function<void (size_t i,
+                                                  size_t first, 
+                                                  size_t last)> fnMatch,
+                              int ofs)
+{
+    size_t cVectors = 30;
+    int ovector[cVectors];
+    
+    size_t c = 0;
+    int rc = pcre_exec(_pRE, 
+                       _pPCREExtra,
+                       strHaystack.c_str(),
+                       strHaystack.length(),
+                       ofs,              /* start at offset 0 in the subject */
+                       PCRE_NO_UTF8_CHECK,              /* default options */
+                       ovector,        /* vector of integers for substring information */
+                       cVectors);      /* number of elements (NOT size in bytes) */    
+    if (rc >= 0)
+    {
+        for (int i = 0;
+             i < rc;
+             ++i)
+        {
+            size_t first = ovector[i * 2];
+            size_t last = ovector[i * 2 + 1];
+            fnMatch(i, first, last);
+            
+            ofs = last;
+            ++c;
+        }
+        
+        return ofs;
+    }
+    
+    return rc;
+}
+
+
+Regex::Regex(const string &strRE)
+    : _pImpl(new Impl(strRE))
+{ }
+
+Regex::~Regex()
+{
+    delete _pImpl;
+}
+
+/* static */ 
+int Regex::GetMaxCapture(const string &strReplace)
+{
+    static const Regex reCaptures("\\$(\\d)");
+    RegexMatches aMatches;
+    int maxCapture = 0;
+    size_t ofs = 0;
+    while (reCaptures.matches(strReplace, aMatches, ofs))
+    {
+        int id = atoi(aMatches.get(1).c_str());
+        if (id > maxCapture)
+            maxCapture = id;
+    }
+    
+    return maxCapture;
+}
+
+/**
+ *  Runs this regex against the given string and returns true if it
+ *  matches.
+ */
+bool Regex::matches(const string &strHaystack) const
+{
+    int ovector[30];
+    int rc = pcre_exec(_pImpl->_pRE, 
+                       _pImpl->_pPCREExtra,
+                       strHaystack.c_str(),
+                       strHaystack.length(),
+                       0,              /* start at offset 0 in the subject */
+                       PCRE_NO_UTF8_CHECK,              /* default options */
+                       ovector,        /* vector of integers for substring information */
+                       30);            /* number of elements (NOT size in bytes) */    
+    if (rc >= 0)
+        return true;
+    
+    return false;
+}
+
+/**
+ *  Like the first matches() variant, but in addition, this captures substrings
+ *  and puts them into the given RegexMatches instance.
+ * 
+ *  As with most regex implementation, the RegexMatches::get(0) will return
+ *  the entire match, where get(1) will return the first substring, (2) the second
+ *  and so on.
+ */
+bool Regex::matches(const string &strHaystack,
+                    RegexMatches &aMatches) const
+{
+    size_t ofs = 0;    
+    return matches(strHaystack, aMatches, ofs);
+}
+
+bool Regex::matches(const string &strHaystack,
+                    RegexMatches &aMatches,
+                    size_t &ofs) const
+{
+    aMatches.pRE = this;
+    
+    size_t cVectors = 30;
+    int ovector[cVectors];
+    int rc = pcre_exec(_pImpl->_pRE, 
+                       _pImpl->_pPCREExtra,
+                       strHaystack.c_str(),
+                       strHaystack.length(),
+                       ofs,
+                       PCRE_NO_UTF8_CHECK,              /* default options */
+                       ovector,        /* vector of integers for substring information */
+                       cVectors);      /* number of elements (NOT size in bytes) */    
+    if (rc >= 0)
+    {
+        /* The value returned by pcre_exec() is one more than the highest numbered pair that has been set. 
+         * For example, if two substrings have been captured, the returned value is 3. 
+         * If there are no capturing subpatterns, the return value from a successful match is 1, 
+         * indicating that just the first pair of offsets has been set. */
+        aMatches.v.clear();
+        
+        for (int i = 0;
+             i < rc;
+             ++i)
+        {
+            size_t first = ovector[i * 2];
+            size_t last = ovector[i * 2 + 1];
+            string str(strHaystack, first, last - first);
+            aMatches.v.push_back(str);
+            
+            ofs = last;
+        }        
+        
+        return true;
+    }
+    
+    return false;
+}
+
+size_t Regex::findReplace(string &strHaystack,
+                          const string &strReplace, 
+                          bool fGlobal) const
+{
+    // State data for easy access from the lambda below.
+    struct 
+    {
+        int maxCapture = -1;
+        string strNew;
+        
+        size_t cReplacements = 0;
+        
+        size_t first0 = 0;      // first offset of 0-index call
+        size_t last0 = 0;       // last offset of 0-index call
+        size_t lastlast;
+        
+        StringVector vMatches;
+    } state;    
+    
+    size_t ofs = 0;
+    while (1)
+    { 
+        /*
+         *  Example: in 
+         *      FOO.FOO.FOO.REST
+         *      0123456789012345
+         *  replace /FOO/ with BAR.
+         *  On the first call, we get first = 0, last = 3.
+         *  On the second, we get     first = 4, last = 7.
+         */
+        
+        int rc = _pImpl->forEachMatch(  strHaystack,
+                                        [&strHaystack, &strReplace, &state](size_t i, size_t first, size_t last)
+                                        {
+                                            if (i == 0)
+                                            {
+                                                state.first0 = first;
+                                                state.last0 = last;
+                                            }
+                                            
+                                            if (state.maxCapture == -1)
+                                                state.maxCapture = GetMaxCapture(strReplace);
+                                            
+                                            if (state.maxCapture)
+                                            {
+                                                string str(strHaystack.substr(first, last - first));                                        
+                                                /* If we have backreferences, then we need to keep track of data across calls.
+                                                * We get called once with i = 0 for the entire match; we need to remember first and
+                                                * last for that because that's what we have to cut out. We then get called with i > 0
+                                                * for every capture, which we need to remember as well.
+                                                */
+                                                state.vMatches.push_back(str);
+                                            }
+                                        },
+                                        ofs);
+        
+        if (rc > 0)
+        {
+            ofs = rc;
+            
+            if (state.cReplacements == 0)
+                // First call:
+                state.strNew = strHaystack.substr(0, state.first0);
+            else 
+                // Subsequent calls:
+                if (state.first0 > state.lastlast)
+                    state.strNew += strHaystack.substr(state.lastlast, state.first0 - state.lastlast);                            
+                
+            if (state.maxCapture)
+            {
+                // Build a non-const replacement string only if we have backreferences.
+                string strReplacement2 = strReplace;
+                for (int i = 1;
+                     i <= state.maxCapture;
+                     ++i)
+                {
+                    stringReplace(strReplacement2, 
+                                  "$" + to_string(i),
+                                  state.vMatches[i]);
+                }
+                state.strNew += strReplacement2;
+            }
+            else 
+                state.strNew += strReplace;
+            
+            state.lastlast = state.last0;
+                
+            ++state.cReplacements;                        
+        }
+        else 
+            break;
+        if (!fGlobal)
+            break;
+    }
+    
+    if (state.cReplacements)
+    {
+        if (state.lastlast)
+            state.strNew += strHaystack.substr(state.lastlast);
+            
+        strHaystack = state.strNew;
+    }
+    
+    return state.cReplacements;
+}
+
+void Regex::split(const string &strHaystack,
+                  StringVector &sv) const
+{
+    size_t lastlast = 0;
+    //  abc||abc||abc
+    // 1   | first
+    // 1    | last
+    // 2        | first
+    // 2         | last
+    _pImpl->forEachMatch(   strHaystack,
+                            [&strHaystack, &sv, &lastlast](size_t i, size_t first, size_t last)
+                            {
+                                // Copy characters from "lastlast" (initially 0) up to first.
+                                sv.push_back(string(strHaystack, lastlast, first - lastlast));
+                                // Next time, copy from last + 1.
+                                lastlast = last;                        
+                            },
+                            true);      // fGlobal
+    if (lastlast < strHaystack.length())
+        sv.push_back(string(strHaystack, lastlast));
+}
+
+const string& Regex::toString() const
+{
+    return _pImpl->_str;
+}
+
+/* static */
+// string Regex::FindInFile(const string &strFilename,
+//                          const string &strRegex)
+// {
+//     ifstream ifs(strFilename);
+//     string strLine;
+//     regex reLine(strRegex);
+//     smatch match;
+// 
+//     while (getline(ifs, strLine))
+//         if (regex_match(strLine, match, reLine))
+//             return match.str(1);
+// 
+//     return "";
+// }

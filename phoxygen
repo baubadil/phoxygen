@@ -1474,7 +1474,8 @@ foreach my $class (sort keys %g_aClasses)
         }
         else
         {
-            myWarning("Class $class specifies parent class \"$parent\" but that cannot be found.");
+            myWarning("Ignoring unknown parent class \"$parent\" of class \"$class\"");
+#             $pClass->parents = {};
         }
     }
 }

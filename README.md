@@ -1,21 +1,37 @@
 # phoxygen
-A quick and dirty documentation tool for PHP code, written in Perl. Accepts doxygen-like tags in the PHP source code.
+A documentation tool for PHP code. Accepts doxygen-like tags in the PHP source code.
 
 This can do less than Doxygen, but one thing it does better is that it parses PHP
 function headers correctly and can document SQL CREATE TABLE statements and REST APIs.
 
+An early version of this was written in Perl, and that's still in the perl/ subdirectory,
+but it was rewritten in C++11 in Nov 2016. Execution time went down from 2.5 seconds to
+one second, and the code is a lot more readable now.
+
+Requirements for building:
+
+ * kBuild (the VirtualBox build system; http://trac.netlabs.org/kbuild; on Gentoo, it's dev-util/kbuild
+   and should be installed already if you have VirtualBox installed as it's required for building it)
+
+ * libpcre for fast regular expressions. pcre.h must be in INCLUDE somewhere and libpcre must be
+   somewhere where the linker can find it.
+ 
+Run "kmk" in the root directory to build. "kmk" is the make utility of kBuild. "kmk BUILD_TYPE=debug" will
+create a debug build instead of a release build.
+
+There is no configuration presently, nor is there any install. After building, you will find the 
+executable under out/linux.amd64/{release|debug}/stage/bin/phoxygen.
+
 ## Usage
 
-Run phoxygen in the root of the PHP document tree that you want to document. It will create a doc/ subdirectory therein
-with two subdirectories:
+Run phoxygen in the root of the PHP document tree that you want to document. It will create a doc/html/ subdirectory
+with lots of HTML files, of which index.html contains the main overview.
 
- * doc/html/ with lots of HTML files, of which index.html contains the main overview;
-
- * doc/latex/ with index.tex, which you can feed into pdflatex to produce a beautiful PDF with the same information.
+An earlier version also generated LaTeX sources for PDF generation but that's currently broken.
 
 ## Basic features in document blocks
 
-phoxygen understands a lot of the same tags as Doxygen and PHPDoc. It is designed to work together with smart PHP editors 
+phoxygen understands a lot of the same tags as Doxygen and PHPDoc. It is designed to work together with smart PHP editors
 such as PHPStorm, which also understand those tags.
 
 It can document classes and functions like the other two if you precede the class or function declaration with a doc block.
@@ -24,19 +40,19 @@ A doc block is a standard C-style comment with two leading stars, like this: `/*
 In addition to PHPDoc, phoxygen understands doxygen-like **function argument** documentation, which spares you some typing, like so:
 
 ```
-/** 
+/**
  *  A function that does things.
  */
-function myFunction($arg1, 		//!< description of arg1
-                    $arg2)		//!< description of arg2
+function myFunction($arg1,      //!< description of arg1
+                    $arg2)      //!< description of arg2
 {
-	...
+    ...
 }
 ```
 
 This is equivalent to writing out a @param block for each of the arguments.
 
-In addition to both PHPDoc and doxygen, you can also document SQL table definitions and REST APIs, which will be listed in 
+In addition to both PHPDoc and doxygen, you can also document SQL table definitions and REST APIs, which will be listed in
 separate blocks in the resulting documentation.
 
 Any `/** ... */` in front of a line that contains the string `CREATE TABLE` is considered an **SQL table documentation.**
@@ -54,7 +70,7 @@ Formatting is very limited. Right now we only understand ordered and unordered l
 
 Any mention of a documented class name in a doc block will automatically be linkified in other docblocks. For example,
 if you have documented a class named `MyClass`, just writing MyClass in other doc blocks will turn such mentiones into
-a link to the MyClass documentation page. This is handy but you might not want to document a class name like "out" 
+a link to the MyClass documentation page. This is handy but you might not want to document a class name like "out"
 because it would linkify that word everywhere.
 
 Function names are not yet resolved.
@@ -73,3 +89,4 @@ line. This will store the docblock separately as a page, which can be refered wi
 to write longer explanations that do not pertain to an individual class or function, for example to explain how your
 authentication works, and then reference that explanation from related classes, methods, tables and REST APIs. These
 pages are listed under "Topics" in the HTML output.
+
