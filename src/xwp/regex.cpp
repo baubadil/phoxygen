@@ -249,17 +249,14 @@ size_t Regex::findReplaceImpl(string &strHaystack,
     // State data for easy access from the lambda below.
     struct
     {
-        string strNew;
-
-        size_t cReplacements = 0;
-
         size_t first0 = 0;      // first offset of 0-index call
         size_t last0 = 0;       // last offset of 0-index call
-        size_t lastlast;
-
         StringVector vMatches;
     } state;
 
+    size_t cReplacements = 0;
+    string strNew;
+    size_t lastlast = 0;
     size_t ofs = 0;
     while (1)
     {
@@ -290,13 +287,13 @@ size_t Regex::findReplaceImpl(string &strHaystack,
         {
             ofs = rc;
 
-            if (state.cReplacements == 0)
+            if (cReplacements == 0)
                 // First call:
-                state.strNew = strHaystack.substr(0, state.first0);
+                strNew = strHaystack.substr(0, state.first0);
             else
                 // Subsequent calls:
-                if (state.first0 > state.lastlast)
-                    state.strNew += strHaystack.substr(state.lastlast, state.first0 - state.lastlast);
+                if (state.first0 > lastlast)
+                    strNew += strHaystack.substr(lastlast, state.first0 - lastlast);
 
             string strReplace;
             fnMatch(state.vMatches, strReplace);
@@ -315,11 +312,16 @@ size_t Regex::findReplaceImpl(string &strHaystack,
                 }
             }
 
-            state.strNew += strReplace;
+            strNew += strReplace;
 
-            state.lastlast = state.last0;
+            lastlast = state.last0;
 
-            ++state.cReplacements;
+            /* Clear vMatches for the next iteration. Otherwise the lambda above will append to it and
+               backreferences will go bad .*/
+            if (fGlobal)
+                state.vMatches.clear();
+
+            ++cReplacements;
         }
         else
             break;
@@ -327,15 +329,15 @@ size_t Regex::findReplaceImpl(string &strHaystack,
             break;
     }
 
-    if (state.cReplacements)
+    if (cReplacements)
     {
-        if (state.lastlast)
-            state.strNew += strHaystack.substr(state.lastlast);
+        if (lastlast)
+            strNew += strHaystack.substr(lastlast);
 
-        strHaystack = state.strNew;
+        strHaystack = strNew;
     }
 
-    return state.cReplacements;
+    return cReplacements;
 }
 
 size_t Regex::findReplace(string &strHaystack,
