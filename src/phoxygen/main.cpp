@@ -18,6 +18,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 #include "phoxygen/phoxygen.h"
 #include "phoxygen/htmlpage.h"
@@ -370,11 +371,19 @@ void writePages()
     string strTitle = "Pages list";
     string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
 
+    // The pages are sorted by page ID, not page title, which is not very helpful to the user. So sort them by title first.
+    vector<PPageComment> v;
     for (auto it : PageComment::GetAll())
-    {
-        auto pPage = it.second;
+        v.push_back(it.second);
+    sort(v.begin(),
+         v.end(),
+         [](PPageComment p1, PPageComment p2)
+         {
+             return p1->getTitle(false) < p2->getTitle(false);
+         });
+
+    for (auto pPage : v)
         htmlBody += "<li>" + pPage->makeLink();
-    }
 
     htmlBody += "</ul>\n";
 
@@ -383,17 +392,15 @@ void writePages()
                               strTitle,
                               htmlBody);
 
-    for (auto it : PageComment::GetAll())
+    for (auto pPage : v)
     {
-        const string &strPageID = it.first;
-        auto pPage = it.second;
         htmlBody = "<h1>" + pPage->getTitle(true) + "</h1>\n";
 
         string htmlThis = pPage->formatComment();
         htmlBody += htmlThis;
 
         p = make_shared<HTMLPage>(dirHTMLOut,
-                                  "page_" + strPageID + ".html",
+                                  "page_" + pPage->getIdentifier() + ".html",
                                   pPage->getTitle(false),
                                   htmlBody);
     }
@@ -408,12 +415,20 @@ void writeRESTAPIs()
     string strTitle = "REST APIs list";
     string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
 
+    // The pages are sorted by page ID, but we want to sort them by API name first and method second.
+    vector<PRESTComment> v;
     for (auto it : RESTComment::GetAll())
-    {
-//         const string &strREST = it.first;
-        auto pREST = it.second;
+        v.push_back(it.second);
+    sort(v.begin(),
+         v.end(),
+         [](PRESTComment p1, PRESTComment p2)
+         {
+             // RESTComment has operator<.
+             return *p1 < *p2;
+         });
+
+    for (auto pREST : v)
         htmlBody += "<li>" + pREST->makeLink();
-    }
 
     htmlBody += "</ul>\n";
 
@@ -422,11 +437,8 @@ void writeRESTAPIs()
                                    strTitle,
                                    htmlBody);
 
-    for (auto it : RESTComment::GetAll())
+    for (auto pREST : v)
     {
-//         const string &strREST = it.first;
-        auto pREST = it.second;
-
         htmlBody = "<h1>" + pREST->getTitle(true) + "</h1>\n";
 
         string htmlThis = pREST->formatComment();

@@ -243,6 +243,15 @@ public:
         return "<a href=\"" + makeHREF() + "\">" + _strMethod + " /api/" + _strName + "</a>";
     }
 
+    bool operator<(const RESTComment &p) const
+    {
+        if (_strName < p._strName)
+            return true;
+        if (_strName == p._strName)
+            return _strMethod < p._strMethod;
+        return false;
+    }
+
     static string MakeIdentifier(const string &name, const string method)
     {
         return name + "_" + strToLower(method);
