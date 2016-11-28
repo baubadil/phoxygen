@@ -130,9 +130,6 @@ public:
     string formatContext();
 
     virtual string formatComment();
-
-    string resolveFunctionRef(const string &id);
-
 };
 
 
@@ -214,27 +211,21 @@ class RESTComment : public CommentBase
     string      _strName;
     string      _strArgs;
 
-public:
     RESTComment(const string &strMethod,
                 const string &strName,
-                const string &strIdentifier,
                 const string &strArgs,
                 const string &strComment,
                 const string &strInputFile,
                 int linenoFirst,
-                int linenoLast)
-        : CommentBase(Type::REST,
-                      "",
-                      strIdentifier,
-                      strComment,
-                      strInputFile,
-                      linenoFirst,
-                      linenoLast)
-    {
-        _strMethod = strMethod;
-        _strName = strName;
-        _strArgs = strArgs;
-    }
+                int linenoLast);
+public:
+    static PRESTComment Make(const string &strMethod,
+                             const string &strName,
+                             const string &strArgs,
+                             const string &strComment,
+                             const string &strInputFile,
+                             int linenoFirst,
+                             int linenoLast);
 
     virtual string getTitle(bool fHTML) override
     {
@@ -251,6 +242,15 @@ public:
     {
         return "<a href=\"" + makeHREF() + "\">" + _strMethod + " /api/" + _strName + "</a>";
     }
+
+    static string MakeIdentifier(const string &name, const string method)
+    {
+        return name + "_" + strToLower(method);
+    }
+
+    static const RESTMap& GetAll();
+
+    static PRESTComment Find(const string &strIdentifier);
 };
 
 

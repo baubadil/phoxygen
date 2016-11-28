@@ -157,7 +157,7 @@ string CommentBase::formatComment()
     }
 
     // Resolve \refs to functions.
-    // htmlComment =~ s/\\ref\s+([a-zA-Z_0-9]+::[a-zA-Z_0-9]+\(\))/resolveFunctionRef($1)/eg; TODO
+    // htmlComment =~ s/\\ref\s+([a-zA-Z_0-9]+::[a-zA-Z_0-9]+\(\))/resolveFunctionRef($1)/eg;
 
     // Resolve \refs to page IDs.
     static const Regex s_reResolveRefs(R"i____(\\ref\s+([-a-zA-Z_0-9:\(]+))i____");
@@ -190,79 +190,25 @@ string CommentBase::formatComment()
                                     }
                                 },
                                 true);
-    // $htmlComment =~ s/\\ref\s+([-a-zA-Z_0-9]+)/resolvePlainRef($1)/eg; TODO
 
     // Linkify REST API references.
-    // $htmlComment =~ s/(GET|POST|PUT|DELETE)\s+\/([-a-zA-Z]+)\s+REST/resolveRESTRef($1, $2)/eg; TODO
+    static const Regex s_reRESTAPI(R"i____((GET|POST|PUT|DELETE)\s+\/([-a-zA-Z]+)\s+REST)i____");
+    s_reRESTAPI.findReplace(htmlComment,
+                            [](const StringVector &vMatches, string &strReplace)
+                            {
+                                const string &strMethod = vMatches[1];
+                                const string &strName = vMatches[2];
+                                string strIdentifier = RESTComment::MakeIdentifier(strMethod, strName);
+                                PRESTComment pREST;
+                                if ((pREST = RESTComment::Find(strIdentifier)))
+                                    strReplace = pREST->makeLink();
+                                else
+                                {
+                                    Debug::Warning("Invalid REST API reference " + strIdentifier);
+                                    strReplace = "?!?!? " + strIdentifier;
+                                }
+                            },
+                            true);
 
     return htmlComment;
 }
-
-const Regex g_reFuncRef(R"i____(([a-zA-Z_0-9]+)::([a-zA-Z_0-9]+)\(\))i____");
-
-string resolveFunctionRef(const string &id)
-{
-    // my ($class, $function) = $id =~ /([a-zA-Z_0-9]+)::([a-zA-Z_0-9]+)\(\)/;
-
-    RegexMatches aMatches;
-    if (g_reFuncRef.matches(id, aMatches))
-    {
-        const string &strClass = aMatches.get(1);
-        // const string &strFunction = aMatches.get(2);
-
-        PClassComment pClass = ClassComment::Find(strClass);
-        if (pClass)
-        {
-//             my $paMembers = $pClass->paMembers; TODO
-//             if (my $pFunction = $paMembers->{$function})
-//             {
-//                 return "<a href=\"class_$class.html#$function\">$id</a>";
-//             }
-//             else
-//             {
-//                 ::myWarning("Invalid function name $function in reference $id");
-//             }
-        }
-        else
-        {
-//             ::myWarning("Invalid class name $class in reference $id");
-        }
-
-        // return $class.$function;
-    }
-
-        return "";
-
-        //     sub resolvePlainRef
-//     {
-//         my ($id) = @_;
-//         if (my $p = $g_aPages{$id})
-//         {
-//             my $title = ::toHTML($p->title);
-//             return "<a href=\"page_$id.html\">$title</a>";
-//         }
-//         else if ($p = $g_aTables{$id})
-//         {
-//             return "<a href=\"table_$id.html\">$id</a>";
-//         }
-//         else if ($p = $g_aRESTComments{$id})
-//         {
-//             return "<a href=\"rest_$id.html\">$id</a>";
-//         }
-//         ::myWarning("Invalid reference: page ID $id not found");
-//         return $id;
-//     }
-//
-//     sub resolveRESTRef
-//     {
-//         my ($method, $name) = @_;
-//         my $id = $name.'_'.lc($method);
-//         if (my $p = $g_aRESTComments{$id})
-//         {
-//             return "<a href=\"rest_$id.html\">$method /$name REST</a>";
-//         }
-//         ::myWarning("Invalid REST API reference: page ID $id not found");
-//         return $id;
-//     }
-
-};

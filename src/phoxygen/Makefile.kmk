@@ -7,6 +7,7 @@ phoxygen_SOURCES += \
 	src/phoxygen/doc_comment.cpp \
 	src/phoxygen/doc_function.cpp \
 	src/phoxygen/doc_page.cpp \
+	src/phoxygen/doc_restapi.cpp \
 	src/phoxygen/doc_table.cpp \
 	src/phoxygen/htmlpage.cpp
 

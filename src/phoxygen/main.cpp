@@ -35,7 +35,6 @@ const string dirHTMLOut = "doc/html";
 const string dirLatexOut = "doc/latex";
 
 PMainPageComment g_pMainPage;
-RESTMap g_mapRESTComments;
 
 /***************************************************************************
  *
@@ -296,30 +295,27 @@ void parseSources(StringVector &vFilenames)
                     /*
                      *  STORE REST API
                      */
-                    const string &method = aMatches.get(1);
+                    const string &method = aMatches.get(1);     // mixed case!
                     const string &nameAndArgs = aMatches.get(2); // ) = /^\s*\S+::(Get|Post|Put|Delete)\(["'"](.*)["'"],/ )
 
                     static const Regex s_reRESTAPIArgs(R"i____(\/([^\/]+)(\/.*)?)i____");
                     RegexMatches aMatches2;
                     if (!s_reRESTAPIArgs.matches(nameAndArgs, aMatches2))
-                        Debug::Warning("wonky REST API");
+                        Debug::Warning("wonky REST API args \"" + nameAndArgs + "\"");
                     else
                     {
                         const string &name = aMatches2.get(1);
                         const string &args = (aMatches2.size() > 1) ? aMatches2.get(2) : "";
-                        string identifier = name + "_" + strToLower(method);
-                        Debug::Log(MAIN, "line $linenoWhereCommentBegan: found REST API $method, $name => $identifier");
-
-                        auto p = make_shared<RESTComment>(strToUpper(method),
-                                                        name,
-                                                        identifier,
-                                                        args,
-                                                        strCurrentComment,
-                                                        strInputFile,
-                                                        linenoWhereCommentBegan,
-                                                        linenoWhereCommentEnded);
+                        auto p = RESTComment::Make(method,
+                                                   name,
+                                                   args,
+                                                   strCurrentComment,
+                                                   strInputFile,
+                                                   linenoWhereCommentBegan,
+                                                   linenoWhereCommentEnded);
                         pCurrent = p;
-                        g_mapRESTComments[identifier] = p;
+
+                        Debug::Log(MAIN, "line " + to_string(linenoWhereCommentBegan) + ": found REST API " + p->getIdentifier());
                     }
 
                     state = State::INIT;
@@ -412,7 +408,7 @@ void writeRESTAPIs()
     string strTitle = "REST APIs list";
     string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
 
-    for (auto it : g_mapRESTComments)
+    for (auto it : RESTComment::GetAll())
     {
 //         const string &strREST = it.first;
         auto pREST = it.second;
@@ -426,7 +422,7 @@ void writeRESTAPIs()
                                    strTitle,
                                    htmlBody);
 
-    for (auto it : g_mapRESTComments)
+    for (auto it : RESTComment::GetAll())
     {
 //         const string &strREST = it.first;
         auto pREST = it.second;
