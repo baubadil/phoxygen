@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -57,6 +57,12 @@ void ClassComment::addMember(PFunctionComment pMember)
     _mapMembers[pMember->getIdentifier()] = pMember;
 }
 
+/* virtual */
+string ClassComment::getTitle(bool fHTML) /* override */
+{
+    return "Class " + _identifier;
+}
+
 string ClassComment::formatChildrenList()
 {
     string htmlBody;
@@ -79,10 +85,10 @@ string ClassComment::formatChildrenList()
     return htmlBody;
 }
 
-/** 
+/**
  *  Called from CommentBase::formatComment() for each class to linkify class names.
  */
-void ClassComment::linkify(string &htmlComment, 
+void ClassComment::linkify(string &htmlComment,
                            bool fSelf)
 {
     _reClass.findReplace(htmlComment,

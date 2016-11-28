@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -297,7 +297,7 @@ void parseSources(StringVector &vFilenames)
                     RegexMatches aMatches2;
                     if (!s_reRESTAPIArgs.matches(nameAndArgs, aMatches2))
                         Debug::Warning("wonky REST API");
-                    else 
+                    else
                     {
                         const string &name = aMatches2.get(1);
                         const string &args = (aMatches2.size() > 1) ? aMatches2.get(2) : "";
@@ -315,7 +315,7 @@ void parseSources(StringVector &vFilenames)
                         pCurrent = p;
                         g_mapRESTComments[identifier] = p;
                     }
-                    
+
                     state = State::INIT;
 
                     // $pLastTable->processInputLine($_, \$state);
@@ -356,17 +356,17 @@ void writePages()
 
     auto p = make_shared<HTMLPage>(dirHTMLOut,
                                    "index.html",
-                                   g_pMainPage->formatTitle(),
+                                   g_pMainPage->getTitle(false),
                                    g_pMainPage->formatComment());
     Debug::Leave();
-    
+
     /*
      *  PAGES
      */
     Debug::Enter(MAIN, "Writing pages");
 
-    string htmlTitle = "Pages list";
-    string htmlBody = "<h1>" + htmlTitle + "</h1>\n\n<ul>";
+    string strTitle = "Pages list";
+    string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
 
     for (auto it : PageComment::GetAll())
     {
@@ -376,27 +376,26 @@ void writePages()
 
     htmlBody += "</ul>\n";
 
-    p = make_shared<HTMLPage>(dirHTMLOut, 
+    p = make_shared<HTMLPage>(dirHTMLOut,
                               "index_pages.html",
-                              htmlTitle,
+                              strTitle,
                               htmlBody);
 
     for (auto it : PageComment::GetAll())
     {
         const string &strPageID = it.first;
         auto pPage = it.second;
-        htmlTitle = toHTML(pPage->getTitle());
-        htmlBody = "<h1>" + htmlTitle + "</h1>\n";
+        htmlBody = "<h1>" + pPage->getTitle(true) + "</h1>\n";
 
         string htmlThis = pPage->formatComment();
         htmlBody += htmlThis;
 
         p = make_shared<HTMLPage>(dirHTMLOut,
                                   "page_" + strPageID + ".html",
-                                  htmlTitle,
+                                  pPage->getTitle(false),
                                   htmlBody);
     }
-    
+
     Debug::Leave();
 }
 
@@ -404,8 +403,8 @@ void writeRESTAPIs()
 {
     Debug::Enter(MAIN, "writing REST APIs");
 
-    string htmlTitle = "REST APIs list";
-    string htmlBody = "<h1>" + htmlTitle + "</h1>\n\n<ul>";
+    string strTitle = "REST APIs list";
+    string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
 
     for (auto it : g_mapRESTComments)
     {
@@ -416,9 +415,9 @@ void writeRESTAPIs()
 
     htmlBody += "</ul>\n";
 
-    auto p = make_shared<HTMLPage>(dirHTMLOut, 
+    auto p = make_shared<HTMLPage>(dirHTMLOut,
                                    "index_restapis.html",
-                                   htmlTitle,
+                                   strTitle,
                                    htmlBody);
 
     for (auto it : g_mapRESTComments)
@@ -426,27 +425,26 @@ void writeRESTAPIs()
 //         const string &strREST = it.first;
         auto pREST = it.second;
 
-        htmlTitle = pREST->formatTitle();
-        htmlBody = "<h1>" + htmlTitle + "</h1>\n";
+        htmlBody = "<h1>" + pREST->getTitle(true) + "</h1>\n";
 
         string htmlThis = pREST->formatComment();
         htmlBody += htmlThis;
 
-        p = make_shared<HTMLPage>(dirHTMLOut, 
+        p = make_shared<HTMLPage>(dirHTMLOut,
                                   pREST->makeHREF(),
-                                  htmlTitle,
+                                  pREST->getTitle(false),
                                   htmlBody);
     }
 
-    Debug::Leave();   
+    Debug::Leave();
 }
 
 void writeTables()
 {
     Debug::Enter(MAIN, "writing tables");
 
-    string htmlTitle = "Tables list";
-    string htmlBody = "<h1>" + htmlTitle + "</h1>\n\n<ul>";
+    string strTitle = "SQL tables list";
+    string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
 
     for (auto it : TableComment::GetAll())
     {
@@ -457,9 +455,9 @@ void writeTables()
 
     htmlBody += "</ul>\n";
 
-    auto p = make_shared<HTMLPage>(dirHTMLOut, 
+    auto p = make_shared<HTMLPage>(dirHTMLOut,
                                    "index_tables.html",
-                                   htmlTitle,
+                                   strTitle,
                                    htmlBody);
 
     for (auto it : TableComment::GetAll())
@@ -467,18 +465,17 @@ void writeTables()
         const string &strTable = it.first;
         auto pTable = it.second;
 
-        htmlTitle = pTable->formatTitle();
-        htmlBody = "<h1>" + htmlTitle + "</h1>\n";
+        htmlBody = "<h1>" + pTable->getTitle(true) + "</h1>\n";
 
         string htmlThis = pTable->formatComment();
         htmlBody += htmlThis;
 
-        auto p = make_shared<HTMLPage>(dirHTMLOut, 
+        auto p = make_shared<HTMLPage>(dirHTMLOut,
                                        "table_" + strTable + ".html",
-                                       htmlTitle,
+                                       pTable->getTitle(false),
                                        htmlBody);
     }
-    
+
     Debug::Leave();
 }
 
@@ -486,15 +483,15 @@ void writeClasses()
 {
     Debug::Enter(MAIN, "Writing class list");
 
-    string htmlTitle = "Class list";
-    string htmlBody = "<h1>" + htmlTitle + "</h1>\n\n";
+    string strTitle = "Class list";
+    string htmlBody = "<h1>" + strTitle + "</h1>\n\n";
     string htmlThis = "<ul>";
 
     // Resolve children.
     for (auto it : ClassComment::GetAll())
     {
         auto pClass = it.second;
-        
+
         for (const auto &strParent : pClass->getParents())
         {
             auto pParent = ClassComment::Find(strParent);
@@ -528,14 +525,14 @@ void writeClasses()
     htmlThis += "</ul>";
 
     htmlBody += htmlThis;
-    auto p = make_shared<HTMLPage>(dirHTMLOut, 
+    auto p = make_shared<HTMLPage>(dirHTMLOut,
                                    "index_classes.html",
-                                   htmlTitle,
+                                   strTitle,
                                    htmlBody);
 
     Debug::Leave();
 
-    /* 
+    /*
      *  Now, one HTML file per class.
      */
 
@@ -546,15 +543,14 @@ void writeClasses()
         const string &strClass = it.first;
         auto pClass = it.second;
 
-        htmlTitle = pClass->formatTitle();
-        htmlBody = "<h1>" + htmlTitle + "</h1>\n";
+        htmlBody = "<h1>" + pClass->getTitle(true) + "</h1>\n";
 
         htmlThis = pClass->formatComment();
         htmlBody += htmlThis;
 
         htmlBody += "<h2>Hierarchy</h2>\n\n";
         htmlThis = "";
-        
+
         auto pllParents = pClass->getParents();
         auto pllChildren = pClass->getChildren();
         if (pllParents.size())
@@ -625,13 +621,13 @@ void writeClasses()
             htmlBody += htmlThis;
         }
 
-        auto p = make_shared<HTMLPage>(dirHTMLOut, 
+        auto p = make_shared<HTMLPage>(dirHTMLOut,
                                        "class_" + strClass + ".html",
-                                       htmlTitle,
+                                       pClass->getTitle(false),
                                        htmlBody);
     }
 
-    Debug::Leave();    
+    Debug::Leave();
 }
 
 
@@ -649,25 +645,33 @@ int main(int argc, char **argv)
 //     reTest.split(strText, v);
 //     for (auto s : v)
 //         cout << s << "\n";
-//     
-    
+//
+
 //     Regex reTest("(.)cces(.)");
 //     string strTest("The Access Access object");
 //     reTest.findReplace(strTest, "$2cces$1", true);
 //     cout << strTest << "\n";
-//     
+//
 //     Regex reTest2("FO*");
 //     strTest = "FOOOOOO.FOOOOOOOOOOOOOOOO.TESTFOOOO.REST";
 //     reTest2.findReplace(strTest, "BAR", true);
 //     cout << strTest << "\n";
-    
+
 //     Regex reTest3("^\\s+\\* ?");
 //     string strTest = " * \\page access_control Access control in Doreen";
 //     reTest3.findReplace(strTest, "", false);
 //     cout << strTest << "\n";
-    
+
+//     static const Regex re("&lt;(\\/?[bi])&gt;");
+//     string strCopy = "Test <b>boldface</b> string";
+//     stringReplace(strCopy, "&", "&amp;");
+//     stringReplace(strCopy, "<", "&lt;");
+//     stringReplace(strCopy, ">", "&gt;");
+//     cout << strCopy << "\n";
+//     re.findReplace(strCopy, "<$1>", true);
+//     cout << strCopy << "\n";
 //     exit(2);
-    
+
     exec("mkdir -p " + dirHTMLOut);
     exec("mkdir -p " + dirLatexOut);
 
@@ -678,7 +682,7 @@ int main(int argc, char **argv)
          i < argc;
          ++i)
     {
-        string strArg(argv[i]);            
+        string strArg(argv[i]);
         if (strArg[0] == '-')
         {
             if (strArg == "-v")
@@ -686,7 +690,7 @@ int main(int argc, char **argv)
         }
         else if (0 == ::stat(strArg.c_str(), &s))
             vFilenames.push_back(strArg);
-        else 
+        else
             throw FSException("don't know what to do with argument " + strArg);
     }
 
@@ -705,7 +709,7 @@ int main(int argc, char **argv)
     }
 
     parseSources(vFilenames);
-    
+
     writePages();
     writeRESTAPIs();
     writeTables();

@@ -13,6 +13,8 @@
 
 #include <sstream>
 
+const string CommentBase::s_strUnknown = "Unknown";
+
 string CommentBase::formatContext()
 {
     return _file + " (lines " + to_string(_linenoFirst) + "--" + to_string(_linenoLast) + ")";

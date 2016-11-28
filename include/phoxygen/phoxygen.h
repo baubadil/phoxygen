@@ -69,6 +69,8 @@ typedef shared_ptr<MainPageComment> PMainPageComment;
 
 class CommentBase
 {
+    static const string s_strUnknown;
+
 protected:
     enum class Type
     {
@@ -87,7 +89,6 @@ protected:
     string _file;
     int _linenoFirst;
     int _linenoLast;
-    string _title;
 
     CommentBase(Type theType,
                 const string &strKeyword,
@@ -116,14 +117,14 @@ public:
         return _identifier;
     }
 
+    virtual string getTitle(bool fHTML)
+    {
+        return s_strUnknown;
+    }
+
     void append(string strLine)
     {
         _comment += strLine;
-    }
-
-    virtual string formatTitle()
-    {
-        return "Unknown";
     }
 
     string formatContext();
@@ -143,22 +144,15 @@ public:
 
 class PageComment : public CommentBase
 {
+    string      _title;
+    string      _strTitleHTML;
+
 protected:
     PageComment(const string &strPageID,
                 const string &strTitle,
                 const string &strInputFile,
                 int linenoFirst,
-                int linenoLast)
-        : CommentBase(Type::PAGE,
-                      "",
-                      strPageID,
-                      "",
-                      strInputFile,
-                      linenoFirst,
-                      linenoLast)
-    {
-        _title = strTitle;
-    }
+                int linenoLast);
 
 public:
     static PPageComment Make(const string &strPageID,
@@ -167,19 +161,11 @@ public:
                              int linenoFirst,
                              int linenoLast);
 
-    const string& getTitle()
-    {
-        return _title;
-    }
-
-    virtual string formatTitle()
-    {
-        return toHTML(_title);
-    }
+    virtual string getTitle(bool fHTML) override;
 
     string makeLink()
     {
-        return "<a href=\"page_" + _identifier + ".html\">" + formatTitle() + "</a>";
+        return "<a href=\"page_" + _identifier + ".html\">" + getTitle(true) + "</a>";
     }
 
     static const PagesMap& GetAll();
@@ -224,9 +210,9 @@ typedef map<string, PRESTComment> RESTMap;
 
 class RESTComment : public CommentBase
 {
-    string _strMethod;
-    string _strName;
-    string _strArgs;
+    string      _strMethod;
+    string      _strName;
+    string      _strArgs;
 
 public:
     RESTComment(const string &strMethod,
@@ -250,9 +236,10 @@ public:
         _strArgs = strArgs;
     }
 
-    virtual string formatTitle()
+    virtual string getTitle(bool fHTML) override
     {
-        return "<code>" + _strMethod + " /api/" + _strName + "</code> REST API";
+        return (fHTML) ? "<code>" + _strMethod + " /api/" + _strName + "</code> REST API"
+                       : _strMethod + " /api/" + _strName + " REST API";
     }
 
     string makeHREF()
@@ -300,10 +287,7 @@ public:
 
     void processInputLine(const string &strLine, State &state);
 
-    virtual string formatTitle()
-    {
-        return "Table <code>" + _identifier + "</code>";
-    }
+    virtual string getTitle(bool fHTML) override;
 
     virtual string formatComment() override;
 
@@ -392,6 +376,8 @@ public:
     {
         return _vMembers;
     }
+
+    virtual string getTitle(bool fHTML) override;
 
     string formatChildrenList();
 

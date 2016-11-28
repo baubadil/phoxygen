@@ -47,6 +47,15 @@ void TableComment::processInputLine(const string &strLine,
 }
 
 /* virtual */
+string TableComment::getTitle(bool fHTML) /* override */
+{
+    if (fHTML)
+        return "SQL table <code>" + _identifier + "</code>";
+
+    return "SQL table " + _identifier;
+}
+
+/* virtual */
 string TableComment::formatComment() /* override */
 {
     string html = CommentBase::formatComment();

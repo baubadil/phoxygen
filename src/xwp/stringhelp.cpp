@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -9,6 +9,7 @@
  */
 
 #include "xwp/stringhelp.h"
+#include "xwp/regex.h"
 
 #include <functional>
 #include <algorithm>
@@ -160,8 +161,9 @@ string toHTML(const string &str)
     stringReplace(strCopy, "<", "&lt;");
     stringReplace(strCopy, ">", "&gt;");
 
-    // Permit some HTML tags.
-    // $str =~ s/&lt;(\/?[bi])&gt;/<\1>/g;
+    // Permit <B> and <I> HTML tags.
+    static const Regex re("&lt;(/?[bi])&gt;");
+    re.findReplace(strCopy, "<$1>", true);
 
     return strCopy;
 }
