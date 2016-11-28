@@ -381,6 +381,9 @@ public:
 
     string formatChildrenList();
 
+    string makeLink(const string &strDisplay,
+                    const string *pstrAnchor);
+
     void linkify(string &htmlComment,
                  bool fSelf);
 

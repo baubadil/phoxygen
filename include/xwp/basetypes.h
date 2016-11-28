@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -25,6 +25,9 @@ typedef vector<string>                      StringVector;
 typedef vector<reference_wrapper<string>>   StringRefVector;
 
 } // namespace XWP
+
+// Can be used with all STL containers that have "find" and "end" methods.
+#define STL_EXISTS(container, item) (container.find(item) != container.end())
 
 #ifdef DEF_STRING_IMPLEMENTATION
 #define DEF_STRING(name, value) extern const string name = value

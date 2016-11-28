@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -76,11 +76,11 @@ string FunctionComment::formatFunction(bool fLong)
     else
     {
         if (fLong)
-            htmlBody += "<table class=\"functable\"><tr><td>";
+            htmlBody += "<table class=\"functable\"><tr><td style=\"white-space: nowrap;\">";
         htmlBody += _keyword + " <b>" + _identifier + "</b>(";
         if (fLong)
             htmlBody += "</td>";
-            
+
         size_t c = 0;
         for (const auto &param : pllArgs)
         {
@@ -88,7 +88,7 @@ string FunctionComment::formatFunction(bool fLong)
             if (fLong)
             {
                 if (c > 1)
-                    htmlBody += "<tr><td>&nbsp;</td>";                    
+                    htmlBody += "<tr><td>&nbsp;</td>";
                 htmlBody += "<td>";
             }
             htmlBody += param.param;

@@ -160,20 +160,33 @@ string CommentBase::formatComment()
     // htmlComment =~ s/\\ref\s+([a-zA-Z_0-9]+::[a-zA-Z_0-9]+\(\))/resolveFunctionRef($1)/eg; TODO
 
     // Resolve \refs to page IDs.
-    static const Regex s_reResolveRefs(R"i____(\\ref\s+([-a-zA-Z_0-9]+))i____");
+    static const Regex s_reResolveRefs(R"i____(\\ref\s+([-a-zA-Z_0-9:\(]+))i____");
+    static const Regex s_reClassAndFunction(R"i____(([a-zA-Z_0-9]+)::([a-zA-Z_0-9]+)\()i____");
     s_reResolveRefs.findReplace(htmlComment,
                                 [](const StringVector &vMatches, string &strReplace)
                                 {
+                                    const string &strMatch = vMatches[1];
                                     PTableComment pTable;
                                     PPageComment pPage;
-                                    if ((pTable = TableComment::Find(vMatches[1])))
+                                    RegexMatches aMatches2;
+                                    if ((pTable = TableComment::Find(strMatch)))
                                         strReplace = pTable->makeLink();
-                                    else if ((pPage = PageComment::Find(vMatches[1])))
+                                    else if ((pPage = PageComment::Find(strMatch)))
                                         strReplace = pPage->makeLink();
+                                    else if (s_reClassAndFunction.matches(strMatch, aMatches2))
+                                    {
+                                        const string &strClass = aMatches2.get(1);
+                                        const string &strFunction = aMatches2.get(2);
+                                        PClassComment pClass;
+                                        if ((pClass = ClassComment::Find(strClass)))
+                                            strReplace = pClass->makeLink(strMatch, &strFunction);
+                                        else
+                                            Debug::Warning("Invalid class \"" + strClass + "\" in \\ref " + strMatch);
+                                    }
                                     else
                                     {
                                         strReplace = "?!?!?!?";
-                                        Debug::Warning("Invalid \\ref " + vMatches[1]);
+                                        Debug::Warning("Invalid \\ref " + strMatch);
                                     }
                                 },
                                 true);

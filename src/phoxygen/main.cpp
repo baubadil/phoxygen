@@ -37,6 +37,12 @@ const string dirLatexOut = "doc/latex";
 PMainPageComment g_pMainPage;
 RESTMap g_mapRESTComments;
 
+/***************************************************************************
+ *
+ *  Top-level functions called from main()
+ *
+ **************************************************************************/
+
 void parseSources(StringVector &vFilenames)
 {
     int c = 0;
@@ -488,8 +494,10 @@ void writeClasses()
     string htmlThis = "<ul>";
 
     // Resolve children.
+    StringSet stClassesWithBrokenParents;
     for (auto it : ClassComment::GetAll())
     {
+        const string &strClass = it.first;
         auto pClass = it.second;
 
         for (const auto &strParent : pClass->getParents())
@@ -501,7 +509,10 @@ void writeClasses()
                 Debug::Log(MAIN, "adding child $class to parent $parent");
             }
             else
-                Debug::Warning("Ignoring unknown parent class \"$parent\" of class \"$class\"");
+            {
+                Debug::Warning("Ignoring unknown parent class \"" + strParent + "\" of class \"" + strClass + "\"");
+                stClassesWithBrokenParents.insert(strClass);
+            }
         }
     }
 
@@ -513,9 +524,9 @@ void writeClasses()
         auto pClass = it.second;
         size_t cParents = pClass->getParents().size();
         Debug::Log(MAIN, to_string(cParents) + " parents");
-        if (!cParents)
+        if (!cParents || STL_EXISTS(stClassesWithBrokenParents, strClass))
         {
-            htmlThis += "<li><a href=\"class_" + strClass + ".html\">" + strClass + "</a>";
+            htmlThis += pClass->makeLink(strClass, NULL);
             htmlThis += pClass->formatChildrenList();
             htmlThis += "</li>\n";
         }

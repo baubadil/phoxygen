@@ -85,6 +85,15 @@ string ClassComment::formatChildrenList()
     return htmlBody;
 }
 
+string ClassComment::makeLink(const string &strDisplay,
+                              const string *pstrAnchor)
+{
+    string str = "<li><a href=\"class_" + _identifier + ".html";
+    if (pstrAnchor)
+        str += "#" + *pstrAnchor;
+    return str + "\">" + strDisplay + "</a>";
+}
+
 /**
  *  Called from CommentBase::formatComment() for each class to linkify class names.
  */
