@@ -44,7 +44,7 @@ string CommentBase::formatComment()
     while(std::getline(ss, line, '\n'))
     {
         static const Regex s_reEmptyLine(R"i____(^\s*$)i____");
-        static const Regex s_reOpenPRE(R"i____(^\s*```(?:php|javascript)\s*$)i____");
+        static const Regex s_reOpenPRE(R"i____(^\s*```(?:php|javascript|xml)\s*$)i____");
         static const Regex s_reClosePRE(R"i____(^\s*```\s*$)i____");
         if (s_reOpenPRE.matches(line))
         {

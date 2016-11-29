@@ -21,21 +21,17 @@ void FunctionComment::setClass(PClassComment pClass)
 void FunctionComment::processInputLine(const string &strLine,
                                        State &state)
 {
-    // ::myLog("function line: $line");
     RegexMatches aMatches;
-    static const Regex s_reFuncOpen(R"i____(^\s*([&\$A-Za-z0-9_ ='"-]+)\s*([,;)])\s*(?:\/\/!<\s*(.*))?$)i____");
+    static const Regex s_reFuncOpen(R"i____(^\s*([&\$A-Za-z0-9_ ='"-:!]+)\s*([,;)])\s*(?:\/\/!<\s*(.*))?$)i____");
     static const Regex s_reFuncEnd(R"i____((.*)\)(.*))i____");
     if (s_reFuncOpen.matches(strLine, aMatches))
     {
         const string &param = aMatches.get(1);
         const string &sep = aMatches.get(2);
         const string &descr = (aMatches.size() > 2) ? aMatches.get(3) : "";
-    // if ( (my $param, my $sep, my $descr) = $line =~ /^\s*([&\$A-Za-z0-9_ ='"-]+)\s*([,;)])\s*(?:\/\/!<\s*(.*))?$/)
-//         auto oldstate = state;
         state = (sep == ",")
                         ? State::IN_FUNCTION_HEADER
                         : State::INIT;
-        // ::myLog("  after function: param=$param, sep='$sep', descr=$descr, state=$oldstate->".$$pState);
 
         _vParams.push_back(Param( { param, descr } ));
     }
@@ -48,7 +44,6 @@ void FunctionComment::processInputLine(const string &strLine,
             trim(arg);
             _vParams.push_back(Param( { arg, "" } ));
         }
-        // ::myLog("after function 1+ args: \"".join('\", \"', @llArgs).'"');
         state = State::INIT;
     }
     else

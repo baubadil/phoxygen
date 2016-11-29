@@ -58,7 +58,7 @@ void parseSources(StringVector &vFilenames)
         int cLinesExamined = 0;
 
         string strCurrentComment = "";
-        int linenoWhereCommentBegan;
+        int linenoWhereCommentBegan = 0;
         int linenoWhereCommentEnded = 0;
         PFunctionComment pLastFunction;
         PTableComment pLastTable;
@@ -120,6 +120,13 @@ void parseSources(StringVector &vFilenames)
                     }
                     Debug::Log(MAIN, "Found closing comment on line $lineno, state=$oldstate->$state");
                     linenoWhereCommentEnded = lineno;
+                }
+                // Ignore two-line PHPDoc variable declarations.
+                else if (    (strCurrentComment.empty())
+                          && (strCurrentLine.find("@var") != string::npos)
+                        )
+                {
+                    state = State::INIT;
                 }
                 else
                 {
