@@ -1,6 +1,6 @@
 
 TEMPLATE_EXE                     = Executable
-TEMPLATE_EXE_TOOL                = GXX64
+TEMPLATE_EXE_TOOL                = GXX
 
 TEMPLATE_EXE_CXXFLAGS           = -Wall -std=c++11
 TEMPLATE_EXE_CXXFLAGS.debug     = -ggdb -O0
