@@ -44,7 +44,7 @@ string CommentBase::formatComment()
     while(std::getline(ss, line, '\n'))
     {
         static const Regex s_reEmptyLine(R"i____(^\s*$)i____");
-        static const Regex s_reOpenPRE(R"i____(^\s*```php\s*$)i____");
+        static const Regex s_reOpenPRE(R"i____(^\s*```(?:php|javascript)\s*$)i____");
         static const Regex s_reClosePRE(R"i____(^\s*```\s*$)i____");
         if (s_reOpenPRE.matches(line))
         {
@@ -160,6 +160,11 @@ string CommentBase::formatComment()
     // Some Markdown syntax.
     static const Regex reCode("`([^`]+)`");
     reCode.findReplace(htmlComment, "<code>$1</code>", true);
+
+    // Linkify links.
+    static const Regex reLink("(https?://\\S+)");
+            // "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)(([\\w\\-]+\\.){1,}?([\\w\\-.~]+\\/?)*[\\[a-zA-Z0-9].,%_=?&#\\-+()\\[\\]\\*$~@!:/{};']*)");
+    reLink.findReplace(htmlComment, "<a href=\"$1\">$1</a>", true);
 
     // Linkify all class names.
     for (const auto &it : ClassComment::GetAll())
