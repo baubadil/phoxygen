@@ -282,13 +282,13 @@ size_t Regex::findReplaceImpl(string &strHaystack,
 
                                             string str(strHaystack.substr(first, last - first));
                                             state.vMatches.push_back(str);
+
+//                                             Debug::Log(0, "Closure: i=" + to_string(i) + ", first=" + to_string(first) + ", last=" + to_string(last) + " => str=\"" + str + "\"");
                                         },
                                         ofs);
 
         if (rc > 0)
         {
-            ofs = rc;
-
             if (cReplacements == 0)
                 // First call:
                 strNew = strHaystack.substr(0, state.first0);
@@ -322,6 +322,9 @@ size_t Regex::findReplaceImpl(string &strHaystack,
                backreferences will go bad .*/
             if (fGlobal)
                 state.vMatches.clear();
+
+            // Search again in the haystack after the whole match.
+            ofs = rc + 1;
 
             ++cReplacements;
         }
