@@ -65,8 +65,8 @@ is considered a **REST API.** This is for frameworks like Slim that use those me
 
 ## Formatting
 
-Formatting is very limited. Right now we only understand ordered and unordered lists, really, like with Markup.
-
+Some limited HTML and Markdown formatting is supported: phoxygen allows the `<B>`, `<I>`, `<OL>`, `<UL>`, `<LI>` and `<CODE>`
+HTML tags as well as backticks (`` ` ``) for code and three backticks for larger code blocks.
 
 ## Linking from other docblocks
 
