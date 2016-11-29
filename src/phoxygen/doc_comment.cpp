@@ -22,9 +22,9 @@ string CommentBase::formatContext()
 }
 
 /* virtual */
-string CommentBase::formatComment()
+string CommentBase::formatComment(OutputMode mode)
 {
-    string htmlComment;
+    string strOutput;
     bool fHadEmptyLine = true;
     bool fPrependNewline = true;
 
@@ -41,6 +41,8 @@ string CommentBase::formatComment()
     stringstream ss(_comment);
     string line;
 
+    FormatterBase &fmt = FormatterBase::Get(mode);
+
     while(std::getline(ss, line, '\n'))
     {
         static const Regex s_reEmptyLine(R"i____(^\s*$)i____");
@@ -49,17 +51,17 @@ string CommentBase::formatComment()
         if (s_reOpenPRE.matches(line))
         {
             paraState = PState::VERBATIM;
-            htmlComment += "\n<pre>\n";
+            strOutput += fmt.openPRE();
         }
         else if (paraState == PState::VERBATIM)
         {
             if (s_reClosePRE.matches(line))
             {
-                htmlComment += "</pre>\n";
+                strOutput += fmt.closePRE();
                 paraState = PState::INIT;
             }
             else
-                htmlComment += ::toHTML(line) + "\n";
+                strOutput += fmt.format(line) + "\n";
         }
         else if (s_reEmptyLine.matches(line))
         {
@@ -73,15 +75,11 @@ string CommentBase::formatComment()
             if (fHadEmptyLine)
             {
                 if (paraState == PState::OPEN)
-                {
-                    htmlComment += "</p>\n\n";
-                }
+                    strOutput += fmt.closePara();
                 else if (    (paraState == PState::UL)
                           || (paraState == PState::OL)
                         )
-                {
-                    htmlComment += "</li>";
-                }
+                    strOutput += fmt.closeLI();
 
                 static const Regex s_reOpenUL(R"i____(^\s+(?:--?|\*)\s+)i____");
                 static const Regex s_reOpenOL(R"i____(^\s+\d+[.)]\s+)i____");
@@ -89,11 +87,11 @@ string CommentBase::formatComment()
                 if (s_reOpenUL.matches(line))
                 {
                     if (paraState != PState::UL)
-                        htmlComment += "<ul>";
+                        strOutput += fmt.openUL();
                     else
-                        htmlComment += "\n\n";
+                        strOutput += "\n\n";
 
-                    htmlComment += "<li>";
+                    strOutput += fmt.openLI();
                     paraState = PState::UL;
 
                     static const Regex s_stripBullet(R"i____(^\s+(?:--?|\*)\s+)i____");
@@ -102,11 +100,11 @@ string CommentBase::formatComment()
                 else if (s_reOpenOL.matches(line))
                 {
                     if (paraState != PState::OL)
-                        htmlComment += "<ol>";
+                        strOutput += fmt.openOL();
                     else
-                        htmlComment += "\n\n";
+                        strOutput += "\n\n";
 
-                    htmlComment += "<li>";
+                    strOutput += fmt.openLI();
                     paraState = PState::OL;
 
                     static const Regex s_stripNumber(R"i____(^\s+\d+[.)]\s+)i____");
@@ -115,11 +113,11 @@ string CommentBase::formatComment()
                 else
                 {
                     if (paraState == PState::UL)
-                        htmlComment += "</ul>\n\n";
+                        strOutput += fmt.closeUL();
                     else if (paraState == PState::OL)
-                        htmlComment += "</ol>\n\n";
+                        strOutput += fmt.closeOL();
 
-                    htmlComment += "<p>";
+                    strOutput += fmt.openPara();
                     paraState = PState::OPEN;
                 }
 
@@ -131,9 +129,9 @@ string CommentBase::formatComment()
             s_reClearLeadingWhitespace.findReplace(line, "", false);
 
             if (fPrependNewline)
-                htmlComment += "\n";
+                strOutput += "\n";
 
-            htmlComment += ::toHTML(line);
+            strOutput += fmt.format(line);
 
             fPrependNewline = true;
         }
@@ -141,30 +139,19 @@ string CommentBase::formatComment()
 
     if (paraState == PState::OPEN)
     {
-        htmlComment += "</p>";
+        strOutput += fmt.closePara();
     }
     else if (paraState == PState::UL)
     {
-        htmlComment += "</ul>";
+        strOutput += fmt.closeUL();
     }
     else if (paraState == PState::OL)
     {
-        htmlComment += "</ol>";
+        strOutput += fmt.closeOL();
     }
 
-    // Permit the following HTML tags by converting &lt;TAG&gt; back to <TAG>.
-    static const StringVector svTags( { "ol", "ul", "li", "b", "i", "code" } );
-    static const Regex reTags("&lt;(/?(?:" + implode("|", svTags) + "))&gt;");
-    reTags.findReplace(htmlComment, "<$1>", true);
-
-    // Some Markdown syntax.
-    static const Regex reCode("`([^`]+)`");
-    reCode.findReplace(htmlComment, "<code>$1</code>", true);
-
-    // Linkify links.
-    static const Regex reLink("(https?://\\S+)");
-            // "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)(([\\w\\-]+\\.){1,}?([\\w\\-.~]+\\/?)*[\\[a-zA-Z0-9].,%_=?&#\\-+()\\[\\]\\*$~@!:/{};']*)");
-    reLink.findReplace(htmlComment, "<a href=\"$1\">$1</a>", true);
+    // Allow <b>, <i>, <ol> etc.
+    fmt.convertFormatting(strOutput);
 
     // Linkify all class names.
     for (const auto &it : ClassComment::GetAll())
@@ -172,13 +159,12 @@ string CommentBase::formatComment()
         const string &strClass = it.first;
         PClassComment pClass = it.second;
 
-        //  print ::Dumper($self);
         if (    (this->getType() == Type::CLASS)
              && (this->getIdentifier() == strClass)
            )
-            pClass->linkify(htmlComment, true);
+            pClass->linkify(mode, strOutput, true);
         else
-            pClass->linkify(htmlComment, false);
+            pClass->linkify(mode, strOutput, false);
     }
 
     // Resolve \refs to functions.
@@ -186,16 +172,16 @@ string CommentBase::formatComment()
 
     // Resolve \refs to page IDs.
     static const Regex s_reResolveRefs(R"i____(\\ref\s+([-a-zA-Z_0-9:\(]+))i____");
-    s_reResolveRefs.findReplace(htmlComment,
-                                [this](const StringVector &vMatches, string &strReplace)
+    s_reResolveRefs.findReplace(strOutput,
+                                [&fmt, this](const StringVector &vMatches, string &strReplace)
                                 {
-                                    strReplace = this->resolveExplicitRef(vMatches[1]);
+                                    strReplace = this->resolveExplicitRef(fmt, vMatches[1]);
                                 },
                                 true);
 
     // Linkify REST API references.
     static const Regex s_reRESTAPI(R"i____((GET|POST|PUT|DELETE)\s+\/([-a-zA-Z]+)\s+REST)i____");
-    s_reRESTAPI.findReplace(htmlComment,
+    s_reRESTAPI.findReplace(strOutput,
                             [](const StringVector &vMatches, string &strReplace)
                             {
                                 const string &strMethod = vMatches[1];
@@ -212,23 +198,24 @@ string CommentBase::formatComment()
                             },
                             true);
 
-    return htmlComment;
+    return strOutput;
 }
 
 /**
  *  Called from a closure in formatComment() whenever a \ref is encountered. strMatch has the
  *  contents of what follows \ref, see the regexp in the code above.
  */
-string CommentBase::resolveExplicitRef(const string &strMatch)
+string CommentBase::resolveExplicitRef(FormatterBase &fmt,
+                                       const string &strMatch)
 {
     PTableComment pTable;
     PPageComment pPage;
     RegexMatches aMatches2;
     if ((pTable = TableComment::Find(strMatch)))
-        return pTable->makeLink();
+        return pTable->makeLink(fmt);
 
     if ((pPage = PageComment::Find(strMatch)))
-        return pPage->makeLink();
+        return pPage->makeLink(fmt);
 
     static const Regex s_reClassAndFunction(R"i____((?:([a-zA-Z_0-9]+)::)?([a-zA-Z_0-9]+)\()i____");
     if (s_reClassAndFunction.matches(strMatch, aMatches2))
@@ -246,7 +233,7 @@ string CommentBase::resolveExplicitRef(const string &strMatch)
             pClass = p2.get();
         }
         if (pClass)
-            return pClass->makeLink(strMatch, &strFunction);
+            return pClass->makeLink(fmt, strMatch, &strFunction);
     }
 
     Debug::Warning("Invalid \\ref " + strMatch);

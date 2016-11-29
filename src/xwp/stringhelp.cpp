@@ -153,13 +153,31 @@ string implode(const string &strGlue, const StringRefVector &v)
     return str;
 }
 
-string toHTML(const string &str)
+void toHTML(string &str)
 {
-    string strCopy = str;
-    stringReplace(strCopy, "&", "&amp;");
-    stringReplace(strCopy, "<", "&lt;");
-    stringReplace(strCopy, ">", "&gt;");
+    stringReplace(str, "&", "&amp;");
+    stringReplace(str, "<", "&lt;");
+    stringReplace(str, ">", "&gt;");
+}
 
+string toHTML2(const string &str)
+{
+    string strCopy(str);
+    toHTML(strCopy);
+    return strCopy;
+}
+
+void toLaTeX(string &ls)
+{
+    stringReplace(ls, "$", "\\$");
+    stringReplace(ls, "#", "\\#");
+    stringReplace(ls, "&", "\\&");
+}
+
+string toLaTeX2(const string &ls)
+{
+    string strCopy(ls);
+    toLaTeX(strCopy);
     return strCopy;
 }
 

@@ -47,32 +47,45 @@ void TableComment::processInputLine(const string &strLine,
 }
 
 /* virtual */
-string TableComment::getTitle(bool fHTML) /* override */
+string TableComment::getTitle(OutputMode mode) /* override */
 {
-    if (fHTML)
-        return "SQL table <code>" + _identifier + "</code>";
+    switch (mode)
+    {
+        case OutputMode::PLAINTEXT:
+            return "SQL table " + _identifier;
 
-    return "SQL table " + _identifier;
+        case OutputMode::HTML:
+            return "SQL table <code>" + _identifier + "</code>";
+
+        case OutputMode::LATEX:
+        break;
+    }
+
+    // LaTeX
+    return "SQL table \\texttt{" + _identifier + "}";
 }
 
 /* virtual */
-string TableComment::formatComment() /* override */
+string TableComment::formatComment(OutputMode mode) /* override */
 {
-    string html = CommentBase::formatComment();
+    string str = CommentBase::formatComment(mode);
+
+    FormatterBase &fmt = FormatterBase::Get(mode);
 
     size_t cLines = _vDefinitionLines.size();
     if (cLines)
     {
         size_t c = 0;
-        html += "\n<pre>\n";
+
+        str += fmt.openPRE();
         for (const string &line : _vDefinitionLines)
         {
             ++c;
-            html += "    ";
+            str += "    ";
             if ( (c > 1) && (c < cLines) )
-                html += "    ";
+                str += "    ";
 
-            string htmlLine = toHTML(line);
+            string htmlLine = fmt.format(line);
 
             for (auto it : g_mapTables)
             {
@@ -83,12 +96,12 @@ string TableComment::formatComment() /* override */
                                        true);   // fGlobal
             }
 
-            html += htmlLine + "\n";
+            str += htmlLine + "\n";
         }
-        html += "\n</pre>\n";
+        str += fmt.closePRE();
     }
 
-    return html;
+    return str;
 }
 
 /* static */

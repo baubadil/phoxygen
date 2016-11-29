@@ -45,9 +45,22 @@ PPageComment PageComment::Make(const string &strPageID,
     return p;
 }
 
-string PageComment::getTitle(bool fHTML)
+string PageComment::getTitle(OutputMode mode)
 {
-    return fHTML ? toHTML(_title) : _title;
+    switch (mode)
+    {
+        case OutputMode::PLAINTEXT:
+            return _title;
+
+        case OutputMode::HTML:
+            return toHTML2(_title);
+
+        case OutputMode::LATEX:
+        break;
+    }
+
+    // LaTeX
+    return toLaTeX2(_title);
 }
 
 /* static */

@@ -61,6 +61,26 @@ PRESTComment RESTComment::Make(const string &strMethod,
     return p;
 }
 
+/* virtual */
+string RESTComment::getTitle(OutputMode mode) /* override */
+{
+    switch (mode)
+    {
+        case OutputMode::PLAINTEXT:
+            return _strMethod + " /api/" + _strName + " REST API";
+        break;
+
+        case OutputMode::HTML:
+            return "<code>" + _strMethod + " /api/" + _strName + "</code> REST API";
+
+        case OutputMode::LATEX:
+        break;
+    }
+
+    // Latex
+    return "\\texttt{" + _strMethod + " /api/" + _strName + "} REST API";
+}
+
 /* static */
 const RESTMap& RESTComment::GetAll()
 {

@@ -58,7 +58,7 @@ void ClassComment::addMember(PFunctionComment pMember)
 }
 
 /* virtual */
-string ClassComment::getTitle(bool fHTML) /* override */
+string ClassComment::getTitle(OutputMode mode) /* override */
 {
     return "Class " + _identifier;
 }
@@ -85,27 +85,27 @@ string ClassComment::formatChildrenList()
     return htmlBody;
 }
 
-string ClassComment::makeLink(const string &strDisplay,
+string ClassComment::makeLink(FormatterBase &fmt,
+                              const string &strDisplay,
                               const string *pstrAnchor)
 {
-    string str = "<a href=\"class_" + _identifier + ".html";
-    if (pstrAnchor)
-        str += "#" + *pstrAnchor;
-    return str + "\">" + strDisplay + "</a>";
+    return fmt.makeLink("class_" + _identifier,
+                        pstrAnchor,
+                        strDisplay);
 }
 
 /**
  *  Called from CommentBase::formatComment() for each class to linkify class names.
  */
-void ClassComment::linkify(string &htmlComment,
+void ClassComment::linkify(OutputMode mode,
+                           string &htmlComment,
                            bool fSelf)
 {
-    _reClass.findReplace(htmlComment,
-                         fSelf ? _strReplSelf
-                               : _strReplOther,
-                         true); // fGlobal
-    // s/(^|p>|\s+)$class($|\s|[.,!;])/$1<b>$class<\/b>$2/g;
-    // $htmlComment =~ s/(^|p>|\s+)$class($|\s|[.,!;])/$1<a href=\"class_$class.html\">$class<\/a>$2/g;
+    if (mode == OutputMode::HTML)
+        _reClass.findReplace(htmlComment,
+                            fSelf ? _strReplSelf
+                                : _strReplOther,
+                            true); // fGlobal
 }
 
 /* static */

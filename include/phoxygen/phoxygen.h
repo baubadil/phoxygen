@@ -16,6 +16,8 @@
 #include "xwp/debug.h"
 #include "xwp/regex.h"
 
+#include "phoxygen/formatter.h"
+
 #include <memory>
 #include <map>
 
@@ -34,7 +36,6 @@ enum class State
     IN_FUNCTION_HEADER,
     IN_CREATE_TABLE,
 };
-
 
 class CommentBase;
 typedef shared_ptr<CommentBase> PCommentBase;
@@ -85,6 +86,7 @@ protected:
     Type _type;
     string _keyword;
     string _identifier;
+    string _strLaTeXID;
     string _comment;
     string _file;
     int _linenoFirst;
@@ -104,7 +106,10 @@ protected:
           _file(strFile),
           _linenoFirst(linenoFirst),
           _linenoLast(linenoLast)
-    { };
+    {
+        _strLaTeXID = _identifier;
+        stringReplace(_strLaTeXID, "_", "@");
+    };
 
 public:
     Type getType() const
@@ -117,7 +122,12 @@ public:
         return _identifier;
     }
 
-    virtual string getTitle(bool fHTML)
+    const string& getLaTeXIdentifier() const
+    {
+        return _strLaTeXID;
+    }
+
+    virtual string getTitle(OutputMode mode)
     {
         return s_strUnknown;
     }
@@ -138,9 +148,10 @@ public:
 
     string formatContext();
 
-    virtual string formatComment();
+    virtual string formatComment(OutputMode mode);
 
-    string resolveExplicitRef(const string &strMatch);
+    string resolveExplicitRef(FormatterBase &fmt,
+                              const string &strMatch);
 };
 
 
@@ -169,11 +180,13 @@ public:
                              int linenoFirst,
                              int linenoLast);
 
-    virtual string getTitle(bool fHTML) override;
+    virtual string getTitle(OutputMode mode) override;
 
-    string makeLink()
+    string makeLink(FormatterBase &fmt)
     {
-        return "<a href=\"page_" + _identifier + ".html\">" + getTitle(true) + "</a>";
+        return fmt.makeLink("page_" + _identifier,
+                            NULL,
+                            getTitle(OutputMode::HTML));
     }
 
     static const PagesMap& GetAll();
@@ -238,11 +251,7 @@ public:
                              int linenoFirst,
                              int linenoLast);
 
-    virtual string getTitle(bool fHTML) override
-    {
-        return (fHTML) ? "<code>" + _strMethod + " /api/" + _strName + "</code> REST API"
-                       : _strMethod + " /api/" + _strName + " REST API";
-    }
+    virtual string getTitle(OutputMode mode) override;
 
     string makeHREF()
     {
@@ -307,13 +316,13 @@ public:
 
     void processInputLine(const string &strLine, State &state);
 
-    virtual string getTitle(bool fHTML) override;
+    virtual string getTitle(OutputMode mode) override;
 
-    virtual string formatComment() override;
+    virtual string formatComment(OutputMode mode) override;
 
-    string makeLink()
+    string makeLink(FormatterBase &fmt)
     {
-        return "<a href=\"table_" + _identifier + ".html\">" + _identifier + "</a>";
+        return fmt.makeLink("table_" + _identifier, NULL, _identifier);
     }
 
     static const TablesMap& GetAll();
@@ -407,14 +416,16 @@ public:
         return _vMembers;
     }
 
-    virtual string getTitle(bool fHTML) override;
+    virtual string getTitle(OutputMode mode) override;
 
     string formatChildrenList();
 
-    string makeLink(const string &strDisplay,
+    string makeLink(FormatterBase &fmt,
+                    const string &strDisplay,
                     const string *pstrAnchor);
 
-    void linkify(string &htmlComment,
+    void linkify(OutputMode mode,
+                 string &htmlComment,
                  bool fSelf);
 
     static const ClassesMap& GetAll();

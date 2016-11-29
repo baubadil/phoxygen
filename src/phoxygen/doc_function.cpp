@@ -90,7 +90,7 @@ string FunctionComment::formatFunction(bool fLong)
             htmlBody += (c == cTotal) ? ") " : ", ";
             if (fLong)
             {
-                htmlBody += "</td>\n<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>" + toHTML(param.description);
+                htmlBody += "</td>\n<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>" + toHTML2(param.description);
                 htmlBody += "</i></td></tr>";
             }
         }

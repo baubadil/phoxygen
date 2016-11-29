@@ -13,18 +13,28 @@
 
 #include "phoxygen/phoxygen.h"
 
-#include <memory>
-
-class HTMLPage;
-typedef shared_ptr<HTMLPage> PHTMLPage;
-
-class HTMLPage
+class HTMLWriter
 {
 public:
-    HTMLPage(const string &dirHTMLOut,
-             const string &strFilename,
-             const string &strTitleWithoutHTML,
-             const string &strBody);
+    static void Write(const string &dirHTMLOut,
+                      const string &strFilename,
+                      const string &strTitleWithoutHTML,
+                      const string &strBody);
 };
+
+class LatexWriter
+{
+    struct Impl;
+    Impl *_pImpl;
+
+public:
+    LatexWriter(const string &dirLatexOut);
+    ~LatexWriter();
+
+    void writeHeader(const string &strTitle);
+    void append(const string &str);
+};
+
+
 
 #endif

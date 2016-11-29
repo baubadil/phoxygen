@@ -16,10 +16,11 @@
 #include <fstream>
 using namespace std;
 
-HTMLPage::HTMLPage(const string &dirHTMLOut,
-                   const string &strFilename,
-                   const string &strTitleWithoutHTML,       //!< in: title string for within HTML "title" element
-                   const string &strBody)
+/* static */
+void HTMLWriter::Write(const string &dirHTMLOut,
+                       const string &strFilename,
+                       const string &strTitleWithoutHTML,       //!< in: title string for within HTML "title" element
+                       const string &strBody)
 {
     string strFullPath = makePath(dirHTMLOut, strFilename);
     ofstream myfile;
@@ -54,3 +55,67 @@ HTMLPage::HTMLPage(const string &dirHTMLOut,
     myfile.close();
 }
 
+struct LatexWriter::Impl
+{
+    ofstream myfile;
+};
+
+LatexWriter::LatexWriter(const string &dirLatexOut)
+    : _pImpl(new Impl())
+{
+    _pImpl->myfile.open(makePath(dirLatexOut, "doreen.tex"));
+}
+
+void LatexWriter::writeHeader(const string &strTitle)
+{
+    append(R"i____(
+\documentclass[oneside,a4paper,10pt,DIV10]{scrbook}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[pdftex,
+            a4paper,
+            bookmarksnumbered,
+            bookmarksopen=true,
+            bookmarksopenlevel=0,
+            colorlinks=true,
+            hyperfootnotes=false,
+            linkcolor=blue,
+            plainpages=false,
+            pdfpagelabels,
+            urlcolor=green
+  ]{hyperref}
+\usepackage{underscore}
+
+% Fonts
+% \usepackage{gentium}
+% \usepackage{libertine}
+\usepackage{paratype}
+\usepackage{helvet}
+\usepackage[scaled]{beramono}
+
+% \renewcommand*\familydefault{\ttdefault}
+
+\newcommand\mytitle{)i____" + strTitle + R"i____(}
+
+\title{\mytitle}
+\hypersetup{pdftitle=\mytitle}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+)i____");
+}
+
+LatexWriter::~LatexWriter()
+{
+    append("\n\\end{document}\n");
+    _pImpl->myfile.close();
+    delete _pImpl;
+}
+
+void LatexWriter::append(const string &str)
+{
+    _pImpl->myfile << str;
+}

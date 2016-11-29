@@ -9,5 +9,6 @@ phoxygen_SOURCES += \
 	src/phoxygen/doc_page.cpp \
 	src/phoxygen/doc_restapi.cpp \
 	src/phoxygen/doc_table.cpp \
+	src/phoxygen/formatter.cpp \
 	src/phoxygen/htmlpage.cpp
 

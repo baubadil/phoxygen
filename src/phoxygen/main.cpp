@@ -39,6 +39,61 @@ PMainPageComment g_pMainPage;
 
 /***************************************************************************
  *
+ *  Formatter
+ *
+ **************************************************************************/
+
+string html2Latex(const string &html)
+{
+    string ls(html);
+    static const Regex re1(R"i____(<\/?p>)i____");
+    re1.findReplace(ls, "", true);
+
+    static const Regex re2(R"i____(<ul>)i____");
+    re2.findReplace(ls, "\\begin{itemize}\n", true);
+    static const Regex re3(R"i____(<\/ul>)i____");
+    re3.findReplace(ls, "\n\\end{itemize}", true);
+    static const Regex re4(R"i____(<ol>)i____");
+    re4.findReplace(ls, "\\begin{enumerate}\n", true);
+    static const Regex re5(R"i____(<\/ol>)i____");
+    re5.findReplace(ls, "\n\\end{enumerate}", true);
+    static const Regex re6(R"i____(<li>)i____");
+    re6.findReplace(ls, "\\item ", true);
+    static const Regex re7(R"i____(<\/li>)i____");
+    re7.findReplace(ls, "", true);
+
+    static const Regex re8(R"i____(<pre>)i____");
+    re8.findReplace(ls, "\\begin{verbatim}", true);
+    static const Regex re9(R"i____(<\/pre>)i____");
+    re9.findReplace(ls, "\\end{verbatim}", true);
+
+    static const Regex re10(R"i____(<code>)i____");
+    re10.findReplace(ls, "\\texttt{", true);
+    static const Regex re11(R"i____(<\/code>)i____");
+    re11.findReplace(ls, "}", true);
+    static const Regex re12(R"i____(<b>)i____");
+    re12.findReplace(ls, "\\textbf{", true);
+    static const Regex re13(R"i____(<\/b>)i____");
+    re13.findReplace(ls, "}/", true);
+
+    static const Regex re14(R"i____(<a href="class_([^"]+)\.html">[^<]+<\/a>)i____");
+    re14.findReplace(ls, "\\hyperref[class-$1]{$1}", true);
+    static const Regex re15(R"i____(<a [^>]+>)i____");
+    re15.findReplace(ls, "", true);
+    static const Regex re16(R"i____(<\/a>)i____");
+    re16.findReplace(ls, "", true);
+
+    stringReplace(ls, "&mdash;", "--");
+    stringReplace(ls, "&nbsp;", "~");
+    stringReplace(ls, "&lt;", "<");
+    stringReplace(ls, "&gt;", ">");
+    stringReplace(ls, "&amp;", "&");
+
+    return toLaTeX2(ls);
+}
+
+/***************************************************************************
+ *
  *  Top-level functions called from main()
  *
  **************************************************************************/
@@ -355,7 +410,7 @@ void parseSources(StringVector &vFilenames)
     cout << c << " files processed.\n";
 }
 
-void writePages()
+void writePages(LatexWriter &lxw)
 {
     /*
      *  MAIN PAGE
@@ -364,18 +419,23 @@ void writePages()
     if (!g_pMainPage)
         g_pMainPage = make_shared<MainPageComment>("Missing \\mainpage (not yet written)", "", 0, 0);
 
-    auto p = make_shared<HTMLPage>(dirHTMLOut,
-                                   "index.html",
-                                   g_pMainPage->getTitle(false),
-                                   g_pMainPage->formatComment());
+    HTMLWriter::Write(dirHTMLOut,
+                      "index.html",
+                      g_pMainPage->getTitle(OutputMode::PLAINTEXT),
+                      g_pMainPage->formatComment(OutputMode::HTML));
     Debug::Leave();
+
+    lxw.writeHeader(g_pMainPage->getTitle(OutputMode::LATEX));
+
+    lxw.append("\n\\chapter{" + g_pMainPage->getTitle(OutputMode::HTML) + "}\n");
+    lxw.append("\n" + g_pMainPage->formatComment(OutputMode::LATEX) + "\n");
 
     /*
      *  PAGES
      */
     Debug::Enter(MAIN, "Writing pages");
 
-    string strTitle = "Pages list";
+    string strTitle = "Topics list";
     string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
 
     // The pages are sorted by page ID, not page title, which is not very helpful to the user. So sort them by title first.
@@ -386,36 +446,41 @@ void writePages()
          v.end(),
          [](PPageComment p1, PPageComment p2)
          {
-             return p1->getTitle(false) < p2->getTitle(false);
+             return p1->getTitle(OutputMode::PLAINTEXT) < p2->getTitle(OutputMode::PLAINTEXT);
          });
 
     for (auto pPage : v)
-        htmlBody += "<li>" + pPage->makeLink();
+        htmlBody += "<li>" + pPage->makeLink(FormatterBase::Get(OutputMode::HTML));
 
     htmlBody += "</ul>\n";
 
-    p = make_shared<HTMLPage>(dirHTMLOut,
-                              "index_pages.html",
-                              strTitle,
-                              htmlBody);
+    HTMLWriter::Write(dirHTMLOut,
+                      "index_pages.html",
+                      strTitle,
+                      htmlBody);
+
+    lxw.append("\n\\chapter{Topics}\n");
 
     for (auto pPage : v)
     {
-        htmlBody = "<h1>" + pPage->getTitle(true) + "</h1>\n";
+        htmlBody = "<h1>" + pPage->getTitle(OutputMode::HTML) + "</h1>\n";
 
-        string htmlThis = pPage->formatComment();
-        htmlBody += htmlThis;
+        htmlBody += pPage->formatComment(OutputMode::HTML);
 
-        p = make_shared<HTMLPage>(dirHTMLOut,
-                                  "page_" + pPage->getIdentifier() + ".html",
-                                  pPage->getTitle(false),
-                                  htmlBody);
+        HTMLWriter::Write(dirHTMLOut,
+                          "page_" + pPage->getIdentifier() + ".html",
+                          pPage->getTitle(OutputMode::PLAINTEXT),
+                          htmlBody);
+
+        lxw.append("\n\\section{" + pPage->getTitle(OutputMode::LATEX) + "}\n");
+        lxw.append("\\label{page" + pPage->getLaTeXIdentifier() + "}\n");
+        lxw.append("\n" + pPage->formatComment(OutputMode::LATEX) + "\n");
     }
 
     Debug::Leave();
 }
 
-void writeRESTAPIs()
+void writeRESTAPIs(LatexWriter &lxw)
 {
     Debug::Enter(MAIN, "writing REST APIs");
 
@@ -439,28 +504,27 @@ void writeRESTAPIs()
 
     htmlBody += "</ul>\n";
 
-    auto p = make_shared<HTMLPage>(dirHTMLOut,
-                                   "index_restapis.html",
-                                   strTitle,
-                                   htmlBody);
+    HTMLWriter::Write(dirHTMLOut,
+                      "index_restapis.html",
+                      strTitle,
+                      htmlBody);
 
     for (auto pREST : v)
     {
-        htmlBody = "<h1>" + pREST->getTitle(true) + "</h1>\n";
+        htmlBody = "<h1>" + pREST->getTitle(OutputMode::HTML) + "</h1>\n";
 
-        string htmlThis = pREST->formatComment();
-        htmlBody += htmlThis;
+        htmlBody += pREST->formatComment(OutputMode::HTML);
 
-        p = make_shared<HTMLPage>(dirHTMLOut,
-                                  pREST->makeHREF(),
-                                  pREST->getTitle(false),
-                                  htmlBody);
+        HTMLWriter::Write(dirHTMLOut,
+                          pREST->makeHREF(),
+                          pREST->getTitle(OutputMode::PLAINTEXT),
+                          htmlBody);
     }
 
     Debug::Leave();
 }
 
-void writeTables()
+void writeTables(LatexWriter &lxw)
 {
     Debug::Enter(MAIN, "writing tables");
 
@@ -471,36 +535,35 @@ void writeTables()
     {
         // const string &strTable = it.first;
         auto pTable = it.second;
-        htmlBody += "<li>" + pTable->makeLink();;
+        htmlBody += "<li>" + pTable->makeLink(FormatterBase::Get(OutputMode::HTML));
     }
 
     htmlBody += "</ul>\n";
 
-    auto p = make_shared<HTMLPage>(dirHTMLOut,
-                                   "index_tables.html",
-                                   strTitle,
-                                   htmlBody);
+    HTMLWriter::Write(dirHTMLOut,
+                      "index_tables.html",
+                      strTitle,
+                      htmlBody);
 
     for (auto it : TableComment::GetAll())
     {
         const string &strTable = it.first;
         auto pTable = it.second;
 
-        htmlBody = "<h1>" + pTable->getTitle(true) + "</h1>\n";
+        htmlBody = "<h1>" + pTable->getTitle(OutputMode::HTML) + "</h1>\n";
 
-        string htmlThis = pTable->formatComment();
-        htmlBody += htmlThis;
+        htmlBody += pTable->formatComment(OutputMode::HTML);
 
-        auto p = make_shared<HTMLPage>(dirHTMLOut,
-                                       "table_" + strTable + ".html",
-                                       pTable->getTitle(false),
-                                       htmlBody);
+        HTMLWriter::Write(dirHTMLOut,
+                          "table_" + strTable + ".html",
+                          pTable->getTitle(OutputMode::PLAINTEXT),
+                          htmlBody);
     }
 
     Debug::Leave();
 }
 
-void writeClasses()
+void writeClasses(LatexWriter &lxw)
 {
     Debug::Enter(MAIN, "Writing class list");
 
@@ -540,17 +603,22 @@ void writeClasses()
         size_t cParents = pClass->getParents().size();
         Debug::Log(MAIN, to_string(cParents) + " parents");
         if (!cParents || STL_EXISTS(stClassesWithBrokenParents, strClass))
-            htmlThis += "<li>" + pClass->makeLink(strClass, NULL) + pClass->formatChildrenList() + "</li>\n";
+            htmlThis +=   "<li>"
+                        + pClass->makeLink(FormatterBase::Get(OutputMode::HTML),
+                                           strClass,
+                                           NULL)
+                        + pClass->formatChildrenList()
+                        + "</li>\n";
         Debug::Leave();
     }
 
     htmlThis += "</ul>";
 
     htmlBody += htmlThis;
-    auto p = make_shared<HTMLPage>(dirHTMLOut,
-                                   "index_classes.html",
-                                   strTitle,
-                                   htmlBody);
+    HTMLWriter::Write(dirHTMLOut,
+                      "index_classes.html",
+                      strTitle,
+                      htmlBody);
 
     Debug::Leave();
 
@@ -565,13 +633,12 @@ void writeClasses()
         const string &strClass = it.first;
         auto pClass = it.second;
 
-        htmlBody = "<h1>" + pClass->getTitle(true) + "</h1>\n";
+        htmlBody = "<h1>" + pClass->getTitle(OutputMode::HTML) + "</h1>\n";
 
-        htmlThis = pClass->formatComment();
-        htmlBody += htmlThis;
+        htmlBody += pClass->formatComment(OutputMode::HTML);
 
         htmlBody += "<h2>Hierarchy</h2>\n\n";
-        htmlThis = "";
+        string htmlThis = "";
 
         auto pllParents = pClass->getParents();
         auto pllChildren = pClass->getChildren();
@@ -635,18 +702,17 @@ void writeClasses()
                 const string &strIdentifier = pMemberFunction->getIdentifier();
                 htmlThis += "<dl><dt id=\"" + strIdentifier + "\">";
                 htmlThis += pMemberFunction->formatFunction(true) + "</dt>\n";
-                string htmlDesc = pMemberFunction->formatComment();
-                htmlThis += "<dd>" + htmlDesc + "</dd></dl>";
+                htmlThis += "<dd>" + pMemberFunction->formatComment(OutputMode::HTML) + "</dd></dl>";
                 htmlThis += "\n";
             }
 
             htmlBody += htmlThis;
         }
 
-        auto p = make_shared<HTMLPage>(dirHTMLOut,
-                                       "class_" + strClass + ".html",
-                                       pClass->getTitle(false),
-                                       htmlBody);
+        HTMLWriter::Write(dirHTMLOut,
+                          "class_" + strClass + ".html",
+                          pClass->getTitle(OutputMode::PLAINTEXT),
+                          htmlBody);
     }
 
     Debug::Leave();
@@ -738,9 +804,12 @@ int main(int argc, char **argv)
 
     parseSources(vFilenames);
 
-    writePages();
-    writeRESTAPIs();
-    writeTables();
-    writeClasses();
+    // Constructor opens, destructor closes.
+    LatexWriter lxw(dirLatexOut);
+
+    writePages(lxw);
+    writeRESTAPIs(lxw);
+    writeTables(lxw);
+    writeClasses(lxw);
 }
 
