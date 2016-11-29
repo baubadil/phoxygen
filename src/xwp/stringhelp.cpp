@@ -9,7 +9,6 @@
  */
 
 #include "xwp/stringhelp.h"
-#include "xwp/regex.h"
 
 #include <functional>
 #include <algorithm>
@@ -160,10 +159,6 @@ string toHTML(const string &str)
     stringReplace(strCopy, "&", "&amp;");
     stringReplace(strCopy, "<", "&lt;");
     stringReplace(strCopy, ">", "&gt;");
-
-    // Permit <B> and <I> HTML tags.
-    static const Regex re("&lt;(/?(?:b|i|pre))&gt;");
-    re.findReplace(strCopy, "<$1>", true);
 
     return strCopy;
 }

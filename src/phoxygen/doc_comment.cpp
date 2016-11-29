@@ -10,6 +10,7 @@
 
 #include "phoxygen/phoxygen.h"
 #include "xwp/regex.h"
+#include "xwp/except.h"
 
 #include <sstream>
 
@@ -32,7 +33,8 @@ string CommentBase::formatComment()
         INIT,
         OPEN,
         UL,
-        OL
+        OL,
+        VERBATIM
     };
     PState paraState = PState::INIT;
 
@@ -42,7 +44,24 @@ string CommentBase::formatComment()
     while(std::getline(ss, line, '\n'))
     {
         static const Regex s_reEmptyLine(R"i____(^\s*$)i____");
-        if (s_reEmptyLine.matches(line))
+        static const Regex s_reOpenPRE(R"i____(^\s*```php\s*$)i____");
+        static const Regex s_reClosePRE(R"i____(^\s*```\s*$)i____");
+        if (s_reOpenPRE.matches(line))
+        {
+            paraState = PState::VERBATIM;
+            htmlComment += "\n<pre>\n";
+        }
+        else if (paraState == PState::VERBATIM)
+        {
+            if (s_reClosePRE.matches(line))
+            {
+                htmlComment += "</pre>\n";
+                paraState = PState::INIT;
+            }
+            else
+                htmlComment += ::toHTML(line) + "\n";
+        }
+        else if (s_reEmptyLine.matches(line))
         {
             Debug::Log(FORMAT, "Had empty line");
             // Line consists entirely of whitespace, or is empty:
@@ -106,7 +125,7 @@ string CommentBase::formatComment()
 
                 fPrependNewline = false;
                 fHadEmptyLine = false;
-            }
+            } // if (fHadEmptyLine)
 
             static const Regex s_reClearLeadingWhitespace(R"i____(^\s+)i____");
             s_reClearLeadingWhitespace.findReplace(line, "", false);
@@ -118,7 +137,7 @@ string CommentBase::formatComment()
 
             fPrependNewline = true;
         }
-    }
+    } // end while(std::getline(ss, line, '\n'))
 
     if (paraState == PState::OPEN)
     {
@@ -133,13 +152,10 @@ string CommentBase::formatComment()
         htmlComment += "</ol>";
     }
 
-    static const StringVector svTags( { "ol", "/ol", "ul", "/ul", "li", "/li" } );
-    for (const auto &tag : svTags)
-    {
-        stringReplace(htmlComment,
-                      "&lt;" + tag + "&gt;",
-                      "<" + tag + ">");
-    }
+    // Permit <B> and <I> HTML tags.
+    static const StringVector svTags( { "ol", "/ol", "ul", "/ul", "li", "/li", "b", "i" } );
+    static const Regex re("&lt;(/?(?:" + implode("|", svTags) + "))&gt;");
+    re.findReplace(htmlComment, "<$1>", true);
 
     // Linkify all class names.
     for (const auto &it : ClassComment::GetAll())
