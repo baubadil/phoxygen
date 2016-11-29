@@ -14,12 +14,13 @@ Requirements for building:
    and should be installed already if you have VirtualBox installed as it's required for building it)
 
  * libpcre for fast regular expressions. pcre.h must be in INCLUDE somewhere and libpcre must be
-   somewhere where the linker can find it.
- 
+   somewhere where the linker can find it. On Gentoo it seems to be installed pretty much by default,
+   on Debian you need libpcre3-dev.
+
 Run "kmk" in the root directory to build. "kmk" is the make utility of kBuild. "kmk BUILD_TYPE=debug" will
 create a debug build instead of a release build.
 
-There is no configuration presently, nor is there any install. After building, you will find the 
+There is no configuration presently, nor is there any install. After building, you will find the
 executable under out/linux.amd64/{release|debug}/stage/bin/phoxygen.
 
 ## Usage
