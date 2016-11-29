@@ -122,6 +122,15 @@ public:
         return s_strUnknown;
     }
 
+    /**
+     *  Returns the class this comment is a part of. This returns NULL but is overridden
+     *  in the ClassComment and FunctionComment subclasses.
+     */
+    virtual ClassComment* getClassForFunctionRef()
+    {
+        return NULL;
+    }
+
     void append(string strLine)
     {
         _comment += strLine;
@@ -130,6 +139,8 @@ public:
     string formatContext();
 
     virtual string formatComment();
+
+    string resolveExplicitRef(const string &strMatch);
 };
 
 
@@ -322,7 +333,7 @@ class ClassComment : public CommentBase
     FunctionsVector     _vMembers;
     FunctionsMap        _mapMembers;
 
-    StringVector        _vParents;
+    StringVector        _vParents;          // Classes and interfaces this class extends / implements
     ClassesVector       _vChildren;
 
     StringVector        _vImplements;
@@ -370,6 +381,16 @@ public:
     }
 
     void addMember(PFunctionComment pMember);
+
+    /**
+     *  Override of the ClassComment function. This returns "this", meaning that
+     *  if a \ref in a class comment refers to a function without a class name,
+     *  the current class is assumed.
+     */
+    virtual ClassComment* getClassForFunctionRef() override
+    {
+        return this;
+    }
 
     const StringVector& getParents()
     {
@@ -436,6 +457,14 @@ public:
                       linenoFirst,
                       linenoLast)
     { }
+
+    /**
+     *  Override of the ClassComment function.
+     */
+    virtual ClassComment* getClassForFunctionRef() override
+    {
+        return _pClass.get();
+    }
 
     void setClass(PClassComment pClass);
 

@@ -162,7 +162,7 @@ string toHTML(const string &str)
     stringReplace(strCopy, ">", "&gt;");
 
     // Permit <B> and <I> HTML tags.
-    static const Regex re("&lt;(/?[bi])&gt;");
+    static const Regex re("&lt;(/?(?:b|i|pre))&gt;");
     re.findReplace(strCopy, "<$1>", true);
 
     return strCopy;

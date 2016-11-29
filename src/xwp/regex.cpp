@@ -230,8 +230,10 @@ bool Regex::matches(const string &strHaystack,
         {
             size_t first = ovector[i * 2];
             size_t last = ovector[i * 2 + 1];
-            string str(strHaystack, first, last - first);
-            aMatches.v.push_back(str);
+            if (first < strHaystack.length())
+                aMatches.v.push_back(string(strHaystack, first, last - first));
+            else
+                aMatches.v.push_back("");
 
             ofs = last;
         }

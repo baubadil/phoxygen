@@ -533,11 +533,7 @@ void writeClasses()
         size_t cParents = pClass->getParents().size();
         Debug::Log(MAIN, to_string(cParents) + " parents");
         if (!cParents || STL_EXISTS(stClassesWithBrokenParents, strClass))
-        {
-            htmlThis += pClass->makeLink(strClass, NULL);
-            htmlThis += pClass->formatChildrenList();
-            htmlThis += "</li>\n";
-        }
+            htmlThis += "<li>" + pClass->makeLink(strClass, NULL) + pClass->formatChildrenList() + "</li>\n";
         Debug::Leave();
     }
 

@@ -161,33 +161,10 @@ string CommentBase::formatComment()
 
     // Resolve \refs to page IDs.
     static const Regex s_reResolveRefs(R"i____(\\ref\s+([-a-zA-Z_0-9:\(]+))i____");
-    static const Regex s_reClassAndFunction(R"i____(([a-zA-Z_0-9]+)::([a-zA-Z_0-9]+)\()i____");
     s_reResolveRefs.findReplace(htmlComment,
-                                [](const StringVector &vMatches, string &strReplace)
+                                [this](const StringVector &vMatches, string &strReplace)
                                 {
-                                    const string &strMatch = vMatches[1];
-                                    PTableComment pTable;
-                                    PPageComment pPage;
-                                    RegexMatches aMatches2;
-                                    if ((pTable = TableComment::Find(strMatch)))
-                                        strReplace = pTable->makeLink();
-                                    else if ((pPage = PageComment::Find(strMatch)))
-                                        strReplace = pPage->makeLink();
-                                    else if (s_reClassAndFunction.matches(strMatch, aMatches2))
-                                    {
-                                        const string &strClass = aMatches2.get(1);
-                                        const string &strFunction = aMatches2.get(2);
-                                        PClassComment pClass;
-                                        if ((pClass = ClassComment::Find(strClass)))
-                                            strReplace = pClass->makeLink(strMatch, &strFunction);
-                                        else
-                                            Debug::Warning("Invalid class \"" + strClass + "\" in \\ref " + strMatch);
-                                    }
-                                    else
-                                    {
-                                        strReplace = "?!?!?!?";
-                                        Debug::Warning("Invalid \\ref " + strMatch);
-                                    }
+                                    strReplace = this->resolveExplicitRef(vMatches[1]);
                                 },
                                 true);
 
@@ -211,4 +188,42 @@ string CommentBase::formatComment()
                             true);
 
     return htmlComment;
+}
+
+/**
+ *  Called from a closure in formatComment() whenever a \ref is encountered. strMatch has the
+ *  contents of what follows \ref, see the regexp in the code above.
+ */
+string CommentBase::resolveExplicitRef(const string &strMatch)
+{
+    PTableComment pTable;
+    PPageComment pPage;
+    RegexMatches aMatches2;
+    if ((pTable = TableComment::Find(strMatch)))
+        return pTable->makeLink();
+
+    if ((pPage = PageComment::Find(strMatch)))
+        return pPage->makeLink();
+
+    static const Regex s_reClassAndFunction(R"i____((?:([a-zA-Z_0-9]+)::)?([a-zA-Z_0-9]+)\()i____");
+    if (s_reClassAndFunction.matches(strMatch, aMatches2))
+    {
+        PClassComment p2;
+        const string &strClass = aMatches2.get(1);
+        const string &strFunction = aMatches2.get(2);
+        ClassComment *pClass;
+        if (strClass.empty())
+            pClass = this->getClassForFunctionRef();
+        else
+        {
+            if (!(p2 = ClassComment::Find(strClass)))
+                Debug::Warning("Invalid class \"" + strClass + "\" in \\ref to function \"" + strMatch + "\"");
+            pClass = p2.get();
+        }
+        if (pClass)
+            return pClass->makeLink(strMatch, &strFunction);
+    }
+
+    Debug::Warning("Invalid \\ref " + strMatch);
+    return "?!?!?!?";
 }

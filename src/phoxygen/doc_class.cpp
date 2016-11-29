@@ -88,7 +88,7 @@ string ClassComment::formatChildrenList()
 string ClassComment::makeLink(const string &strDisplay,
                               const string *pstrAnchor)
 {
-    string str = "<li><a href=\"class_" + _identifier + ".html";
+    string str = "<a href=\"class_" + _identifier + ".html";
     if (pstrAnchor)
         str += "#" + *pstrAnchor;
     return str + "\">" + strDisplay + "</a>";
