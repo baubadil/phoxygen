@@ -75,13 +75,15 @@ if you have documented a class named `MyClass`, just writing MyClass in other do
 a link to the MyClass documentation page. This is handy but you might not want to document a class name like "out"
 because it would linkify that word everywhere.
 
-Function names are not yet resolved.
-
 Any occurence of the form "GET|POST|PUT|DELETE /foo REST API" will be turned into a link to the corresponding REST API,
 if it is known.
 
 Table links are not automatically converted. To create a link to a documented table, use `\ref tablename` (with tablename
 being the same that was used in the `CREATE TABLE` statement that you documented).
+
+You can also link to functions with \ref provided that the link ends with (. It must contain a class name, otherwise
+the current class (if any) is assumed. For example: `\ref MyClass::function()` or just `\ref function()` if you are in a block
+of a class or method.
 
 
 ## Special pages
