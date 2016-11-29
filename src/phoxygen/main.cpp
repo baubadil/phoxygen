@@ -685,6 +685,12 @@ int main(int argc, char **argv)
 //     cout << strCopy << "\n";
 //     re.findReplace(strCopy, "<$1>", true);
 //     cout << strCopy << "\n";
+
+//     string     htmlComment("includes `/var/www/.../doreen-optional-vars.inc.php``$g_aPlugins` variable");
+//     static const Regex reCode("`([^`]+)`");
+//     reCode.findReplace(htmlComment, "START$1END", true);
+//     cout << htmlComment << "\n";
+//
 //     exit(2);
 
     exec("mkdir -p " + dirHTMLOut);

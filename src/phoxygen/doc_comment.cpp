@@ -152,10 +152,14 @@ string CommentBase::formatComment()
         htmlComment += "</ol>";
     }
 
-    // Permit <B> and <I> HTML tags.
-    static const StringVector svTags( { "ol", "/ol", "ul", "/ul", "li", "/li", "b", "i" } );
-    static const Regex re("&lt;(/?(?:" + implode("|", svTags) + "))&gt;");
-    re.findReplace(htmlComment, "<$1>", true);
+    // Permit the following HTML tags by converting &lt;TAG&gt; back to <TAG>.
+    static const StringVector svTags( { "ol", "ul", "li", "b", "i", "code" } );
+    static const Regex reTags("&lt;(/?(?:" + implode("|", svTags) + "))&gt;");
+    reTags.findReplace(htmlComment, "<$1>", true);
+
+    // Some Markdown syntax.
+    static const Regex reCode("`([^`]+)`");
+    reCode.findReplace(htmlComment, "<code>$1</code>", true);
 
     // Linkify all class names.
     for (const auto &it : ClassComment::GetAll())
