@@ -58,6 +58,12 @@ void ClassComment::addMember(PFunctionComment pMember)
 }
 
 /* virtual */
+string ClassComment::makeTarget(FormatterBase &fmt) /* override */
+{
+    return fmt.makeTarget("class", _identifier);
+}
+
+/* virtual */
 string ClassComment::getTitle(OutputMode mode) /* override */
 {
     return "Class " + _identifier;
@@ -80,6 +86,107 @@ string ClassComment::formatChildrenList()
             htmlBody += "</li>\n";
         }
         htmlBody += "</ul>";
+    }
+
+    return htmlBody;
+}
+
+string ClassComment::formatHierarchy(FormatterBase &fmt)
+{
+    string strFormatted;
+
+    auto pllParents = getParents();
+    auto pllChildren = getChildren();
+    if (pllParents.size())
+    {
+        for (const string &strParent : pllParents)
+        {
+            auto pParent = ClassComment::Find(strParent);
+            if (pParent)
+                strFormatted += fmt.makeLink(pParent->makeTarget(fmt),
+                                             NULL,
+                                             strParent) + fmt.mdash();
+        }
+    }
+
+    if (    (pllParents.size())
+         || (pllChildren.size())
+       )
+    {
+        strFormatted += fmt.makeBold(_identifier);
+    }
+    else
+    {
+        strFormatted += fmt.openPara() + "This class stands alone and has neither parents nor children." + fmt.closePara();
+    }
+
+    if (pllChildren.size())
+    {
+        strFormatted += fmt.mdash();
+        size_t c = 0;
+        for (auto pChild : pllChildren)
+        {
+            if (c)
+                strFormatted += ", ";
+            const string &strChild = pChild->getIdentifier();
+            strFormatted += fmt.makeLink(pChild->makeTarget(fmt), NULL, strChild);
+            ++c;
+        }
+    }
+
+    return strFormatted;
+}
+
+string ClassComment::formatMembers(FormatterBase &fmt)
+{
+    string htmlBody, htmlThis;
+
+    auto pllMembers = getMembers();
+    size_t cMembers = pllMembers.size();
+    Debug::Log(MAIN, "Class " + _identifier + " has " + to_string(cMembers) + " members");
+    if (cMembers)
+    {
+        htmlBody += "\n\n" + fmt.openPara() + fmt.makeBold(to_string(cMembers) + " members") + fmt.closePara();
+
+        htmlThis = fmt.openUL();
+        for (auto pMemberFunction : pllMembers)
+        {
+            const string &strIdentifier = pMemberFunction->getIdentifier();
+            htmlThis += fmt.openLI() + fmt.makeLink(this->makeTarget(fmt),
+                                                    &strIdentifier,
+                                                    pMemberFunction->formatFunction(fmt, false));
+            htmlThis += fmt.closeLI();
+        }
+        htmlThis += fmt.closeUL();
+
+        htmlBody += htmlThis;
+
+        if (fmt.getMode() == OutputMode::HTML)
+        {
+            htmlBody += fmt.makeHeading(2, "Details");;
+            htmlThis = "";
+
+            for (auto pMemberFunction : pllMembers)
+            {
+                htmlThis += "<dl><dt id=\"" + pMemberFunction->getIdentifier() + "\">";
+                htmlThis += pMemberFunction->formatFunction(fmt, true) + "</dt>\n";
+                htmlThis += "<dd>" + pMemberFunction->formatComment(fmt.getMode()) + "</dd></dl>";
+                htmlThis += "\n";
+            }
+
+            htmlBody += htmlThis;
+        }
+        else
+        {
+            htmlBody += "\n\\begin{description}\n";
+
+            for (auto pMemberFunction : pllMembers)
+                htmlBody += "\\item[" + pMemberFunction->formatFunction(fmt, false) + "] --- " + pMemberFunction->formatComment(fmt.getMode());
+
+            htmlBody += "\n\\end{description}\n";
+        }
+
+
     }
 
     return htmlBody;

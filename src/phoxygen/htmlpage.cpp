@@ -92,6 +92,7 @@ void LatexWriter::writeHeader(const string &strTitle)
 % \usepackage{libertine}
 \usepackage{paratype}
 \usepackage{helvet}
+\usepackage{alltt}
 \usepackage[scaled]{beramono}
 
 % \renewcommand*\familydefault{\ttdefault}

@@ -45,7 +45,14 @@ PPageComment PageComment::Make(const string &strPageID,
     return p;
 }
 
-string PageComment::getTitle(OutputMode mode)
+/* virtual */
+string PageComment::makeTarget(FormatterBase &fmt) /* override */
+{
+    return fmt.makeTarget("page", _identifier);
+}
+
+/* virtual */
+string PageComment::getTitle(OutputMode mode) /* override */
 {
     switch (mode)
     {

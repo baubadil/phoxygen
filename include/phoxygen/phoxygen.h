@@ -86,7 +86,6 @@ protected:
     Type _type;
     string _keyword;
     string _identifier;
-    string _strLaTeXID;
     string _comment;
     string _file;
     int _linenoFirst;
@@ -106,10 +105,7 @@ protected:
           _file(strFile),
           _linenoFirst(linenoFirst),
           _linenoLast(linenoLast)
-    {
-        _strLaTeXID = _identifier;
-        stringReplace(_strLaTeXID, "_", "@");
-    };
+    { };
 
 public:
     Type getType() const
@@ -122,10 +118,11 @@ public:
         return _identifier;
     }
 
-    const string& getLaTeXIdentifier() const
-    {
-        return _strLaTeXID;
-    }
+    /**
+     *  makeTarget() must produce the target filename for HTML mode (including the .html suffix),
+     *  which can also be used as a link target, or the label for LaTeX mode.
+     */
+    virtual string makeTarget(FormatterBase &fmt) = 0;
 
     virtual string getTitle(OutputMode mode)
     {
@@ -180,13 +177,15 @@ public:
                              int linenoFirst,
                              int linenoLast);
 
+    virtual string makeTarget(FormatterBase &fmt) override;
+
     virtual string getTitle(OutputMode mode) override;
 
     string makeLink(FormatterBase &fmt)
     {
-        return fmt.makeLink("page_" + _identifier,
+        return fmt.makeLink(makeTarget(fmt),
                             NULL,
-                            getTitle(OutputMode::HTML));
+                            getTitle(fmt.getMode()));
     }
 
     static const PagesMap& GetAll();
@@ -251,16 +250,15 @@ public:
                              int linenoFirst,
                              int linenoLast);
 
+    virtual string makeTarget(FormatterBase &fmt) override;
+
     virtual string getTitle(OutputMode mode) override;
 
-    string makeHREF()
+    string makeLink(FormatterBase &fmt)
     {
-        return "rest_" + getIdentifier() + ".html";
-    }
-
-    string makeLink()
-    {
-        return "<a href=\"" + makeHREF() + "\">" + _strMethod + " /api/" + _strName + "</a>";
+        return fmt.makeLink("rest_" + getIdentifier(),
+                            NULL,
+                            _strMethod + " /api/" + _strName);;
     }
 
     bool operator<(const RESTComment &p) const
@@ -315,6 +313,8 @@ public:
                               int linenoLast);
 
     void processInputLine(const string &strLine, State &state);
+
+    virtual string makeTarget(FormatterBase &fmt) override;
 
     virtual string getTitle(OutputMode mode) override;
 
@@ -416,9 +416,15 @@ public:
         return _vMembers;
     }
 
+    virtual string makeTarget(FormatterBase &fmt) override;
+
     virtual string getTitle(OutputMode mode) override;
 
     string formatChildrenList();
+
+    string formatHierarchy(FormatterBase &fmt);
+
+    string formatMembers(FormatterBase &fmt);
 
     string makeLink(FormatterBase &fmt,
                     const string &strDisplay,
@@ -477,11 +483,13 @@ public:
         return _pClass.get();
     }
 
+    virtual string makeTarget(FormatterBase &fmt) override;
+
     void setClass(PClassComment pClass);
 
     void processInputLine(const string &strLine, State &state);
 
-    string formatFunction(bool fLong);
+    string formatFunction(FormatterBase &fmt, bool fLong);
 };
 
 #endif // PHOXYGEN_H

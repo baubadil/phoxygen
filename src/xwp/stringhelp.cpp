@@ -172,6 +172,8 @@ void toLaTeX(string &ls)
     stringReplace(ls, "$", "\\$");
     stringReplace(ls, "#", "\\#");
     stringReplace(ls, "&", "\\&");
+    stringReplace(ls, "[", "\\[");
+    stringReplace(ls, "]", "\\]");
 }
 
 string toLaTeX2(const string &ls)

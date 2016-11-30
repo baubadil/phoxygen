@@ -62,6 +62,12 @@ PRESTComment RESTComment::Make(const string &strMethod,
 }
 
 /* virtual */
+string RESTComment::makeTarget(FormatterBase &fmt) /* override */
+{
+    return fmt.makeTarget("rest", _identifier);
+}
+
+/* virtual */
 string RESTComment::getTitle(OutputMode mode) /* override */
 {
     switch (mode)

@@ -47,6 +47,12 @@ void TableComment::processInputLine(const string &strLine,
 }
 
 /* virtual */
+string TableComment::makeTarget(FormatterBase &fmt) /* override */
+{
+    return fmt.makeTarget("table", _identifier);
+}
+
+/* virtual */
 string TableComment::getTitle(OutputMode mode) /* override */
 {
     switch (mode)
@@ -87,14 +93,21 @@ string TableComment::formatComment(OutputMode mode) /* override */
 
             string htmlLine = fmt.format(line);
 
-            for (auto it : g_mapTables)
-            {
-                const string &strTable = it.first;
-                Regex reTableRef("REFERENCES\\s+" + strTable + "\\(");
-                reTableRef.findReplace(htmlLine,
-                                       "REFERENCES <a href=\"table_" + strTable + ".html\">" + strTable + "</a>(",
-                                       true);   // fGlobal
-            }
+//             for (auto it : g_mapTables)
+//             {
+//                 const string &strTable = it.first;
+                Regex reTableRef("REFERENCES\\s+([a-zA-Z_]+)\\(");
+                reTableRef.findReplace( htmlLine,
+                                        // "REFERENCES " + fmt.makeLink(), //  <a href=\"table_" + strTable + ".html\">" + strTable + "</a>(",
+                                        [&fmt](const StringVector &vMatches, string &strReplace)
+                                        {
+                                            const string &strTable = vMatches[1];
+                                            auto pTable = TableComment::Find(strTable);
+                                            if (pTable)
+                                                strReplace = "REFERENCES " + pTable->makeLink(fmt) + "(";
+                                        },
+                                        true);   // fGlobal
+//             }
 
             str += htmlLine + "\n";
         }

@@ -182,14 +182,14 @@ string CommentBase::formatComment(OutputMode mode)
     // Linkify REST API references.
     static const Regex s_reRESTAPI(R"i____((GET|POST|PUT|DELETE)\s+\/([-a-zA-Z]+)\s+REST)i____");
     s_reRESTAPI.findReplace(strOutput,
-                            [](const StringVector &vMatches, string &strReplace)
+                            [&fmt](const StringVector &vMatches, string &strReplace)
                             {
                                 const string &strMethod = vMatches[1];
                                 const string &strName = vMatches[2];
                                 string strIdentifier = RESTComment::MakeIdentifier(strMethod, strName);
                                 PRESTComment pREST;
                                 if ((pREST = RESTComment::Find(strIdentifier)))
-                                    strReplace = pREST->makeLink();
+                                    strReplace = pREST->makeLink(fmt);
                                 else
                                 {
                                     Debug::Warning("Invalid REST API reference " + strIdentifier);

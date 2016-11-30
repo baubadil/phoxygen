@@ -23,9 +23,24 @@ class FormatterBase
 protected:
     static const string Empty;
     static const string TwoNewlines;
+    static const string TwoDashes;
+
+    OutputMode _mode;
+
+    FormatterBase(OutputMode mode)
+        : _mode(mode)
+    { }
 
 public:
     static FormatterBase& Get(OutputMode mode);
+
+    OutputMode getMode()
+    {
+        return _mode;
+    }
+
+    virtual string makeTarget(const string &prefix,
+                              const string &identifier) { return Empty; }
 
     virtual const string& openPara() { return Empty; }
     virtual const string& closePara() { return TwoNewlines; }
@@ -40,10 +55,12 @@ public:
     virtual const string& closeOL() { return Empty; }
 
     virtual const string& openLI() { return Empty; }
-    virtual const string& closeLI() { return Empty; }
+    virtual const string& closeLI() { return TwoNewlines; }
 
     virtual const string& openCODE() { return Empty; }
     virtual const string& closeCODE() { return Empty; }
+
+    virtual const string& mdash() { return TwoDashes; }
 
     virtual string format(const string &str) { return str; }
 
@@ -55,11 +72,24 @@ public:
     {
         return strTitle;
     }
+
+    virtual string makeBold(const string &str)
+    {
+        return str;
+    }
+
+    virtual string makeHeading(uint level, const string &str)
+    {
+        return "\n\n" + str + "\n\n";
+    }
 };
 
 class FormatterPlain : public FormatterBase
 {
 public:
+    FormatterPlain()
+        : FormatterBase(OutputMode::PLAINTEXT)
+    { }
 };
 
 class FormatterHTML : public FormatterBase
@@ -76,8 +106,19 @@ class FormatterHTML : public FormatterBase
     static const string EndLI;
     static const string OpenCODE;
     static const string CloseCODE;
+    static const string MDash;
 
 public:
+    FormatterHTML()
+        : FormatterBase(OutputMode::HTML)
+    { }
+
+    virtual string makeTarget(const string &prefix,
+                              const string &identifier)  override
+    {
+        return prefix + "_" + identifier + ".html";
+    }
+
     virtual const string& openPara() override { return OpenP; }
     virtual const string& closePara() override { return CloseP; }
 
@@ -96,6 +137,8 @@ public:
     virtual const string& openCODE() override { return OpenCODE; }
     virtual const string& closeCODE() override { return CloseCODE; }
 
+    virtual const string& mdash() override { return MDash; }
+
     virtual string format(const string &str) override;
 
     virtual void convertFormatting(string &str) override;
@@ -103,6 +146,13 @@ public:
     virtual string makeLink(const string &strIdentifier,
                             const string *pstrAnchor,
                             const string &strTitle) override;
+
+    virtual string makeBold(const string &str) override
+    {
+        return "<b>" + str + "</b>";
+    }
+
+    virtual string makeHeading(uint level, const string &str) override;
 };
 
 class FormatterLatex : public FormatterBase
@@ -118,6 +168,13 @@ class FormatterLatex : public FormatterBase
     static const string CloseCurly;
 
 public:
+    FormatterLatex()
+        : FormatterBase(OutputMode::LATEX)
+    { }
+
+    virtual string makeTarget(const string &prefix,
+                              const string &identifier)  override;
+
     virtual const string& openPRE() override { return BeginVerbatim; }
     virtual const string& closePRE() override { return EndVerbatim; }
 
@@ -135,6 +192,17 @@ public:
     virtual string format(const string &str) override;
 
     virtual void convertFormatting(string &str) override;
+
+    virtual string makeLink(const string &strIdentifier,
+                            const string *pstrAnchor,
+                            const string &strTitle) override;
+
+    virtual string makeBold(const string &str) override
+    {
+        return "\\textbf{" + str + "}";
+    }
+
+    virtual string makeHeading(uint level, const string &str) override;
 };
 
 #endif // FORMATTER_H

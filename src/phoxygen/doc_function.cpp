@@ -13,6 +13,12 @@
 #include "xwp/debug.h"
 #include "xwp/regex.h"
 
+/* virtual */
+string FunctionComment::makeTarget(FormatterBase &fmt) /* override */
+{
+    return "";
+}
+
 void FunctionComment::setClass(PClassComment pClass)
 {
     _pClass = pClass;
@@ -52,7 +58,8 @@ void FunctionComment::processInputLine(const string &strLine,
     }
 }
 
-string FunctionComment::formatFunction(bool fLong)
+string FunctionComment::formatFunction(FormatterBase &fmt,
+                                       bool fLong)
 {
     string htmlBody;
 
@@ -67,12 +74,12 @@ string FunctionComment::formatFunction(bool fLong)
     //    +----------------------+------------------------+---------------------+
 
     if (!cTotal)
-        htmlBody += _keyword + " <b>" + _identifier + "</b>()";
+        htmlBody += _keyword + " " + fmt.makeBold(_identifier) + "()";
     else
     {
         if (fLong)
             htmlBody += "<table class=\"functable\"><tr><td style=\"white-space: nowrap;\">";
-        htmlBody += _keyword + " <b>" + _identifier + "</b>(";
+        htmlBody += _keyword + " " + fmt.makeBold(_identifier) + "(";
         if (fLong)
             htmlBody += "</td>";
 
@@ -86,11 +93,11 @@ string FunctionComment::formatFunction(bool fLong)
                     htmlBody += "<tr><td>&nbsp;</td>";
                 htmlBody += "<td>";
             }
-            htmlBody += param.param;
+            htmlBody += fmt.format(param.param);
             htmlBody += (c == cTotal) ? ") " : ", ";
             if (fLong)
             {
-                htmlBody += "</td>\n<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>" + toHTML2(param.description);
+                htmlBody += "</td>\n<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>" + fmt.format(param.description);
                 htmlBody += "</i></td></tr>";
             }
         }
@@ -100,3 +107,4 @@ string FunctionComment::formatFunction(bool fLong)
 
     return htmlBody;
 }
+

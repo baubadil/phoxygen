@@ -412,6 +412,9 @@ void parseSources(StringVector &vFilenames)
 
 void writePages(LatexWriter &lxw)
 {
+    FormatterBase &fmtHTML = FormatterBase::Get(OutputMode::HTML);
+    FormatterBase &fmtLatex = FormatterBase::Get(OutputMode::LATEX);
+
     /*
      *  MAIN PAGE
      */
@@ -468,12 +471,12 @@ void writePages(LatexWriter &lxw)
         htmlBody += pPage->formatComment(OutputMode::HTML);
 
         HTMLWriter::Write(dirHTMLOut,
-                          "page_" + pPage->getIdentifier() + ".html",
+                          pPage->makeTarget(fmtHTML),
                           pPage->getTitle(OutputMode::PLAINTEXT),
                           htmlBody);
 
         lxw.append("\n\\section{" + pPage->getTitle(OutputMode::LATEX) + "}\n");
-        lxw.append("\\label{page" + pPage->getLaTeXIdentifier() + "}\n");
+        lxw.append("\\label{" + pPage->makeTarget(fmtLatex) + "}\n");
         lxw.append("\n" + pPage->formatComment(OutputMode::LATEX) + "\n");
     }
 
@@ -483,6 +486,9 @@ void writePages(LatexWriter &lxw)
 void writeRESTAPIs(LatexWriter &lxw)
 {
     Debug::Enter(MAIN, "writing REST APIs");
+
+    FormatterBase &fmtHTML = FormatterBase::Get(OutputMode::HTML);
+    FormatterBase &fmtLatex = FormatterBase::Get(OutputMode::LATEX);
 
     string strTitle = "REST APIs list";
     string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
@@ -500,7 +506,7 @@ void writeRESTAPIs(LatexWriter &lxw)
          });
 
     for (auto pREST : v)
-        htmlBody += "<li>" + pREST->makeLink();
+        htmlBody += "<li>" + pREST->makeLink(fmtHTML);
 
     htmlBody += "</ul>\n";
 
@@ -509,6 +515,8 @@ void writeRESTAPIs(LatexWriter &lxw)
                       strTitle,
                       htmlBody);
 
+    lxw.append("\n\\chapter{" + strTitle + "}\n");
+
     for (auto pREST : v)
     {
         htmlBody = "<h1>" + pREST->getTitle(OutputMode::HTML) + "</h1>\n";
@@ -516,9 +524,13 @@ void writeRESTAPIs(LatexWriter &lxw)
         htmlBody += pREST->formatComment(OutputMode::HTML);
 
         HTMLWriter::Write(dirHTMLOut,
-                          pREST->makeHREF(),
+                          pREST->makeTarget(fmtHTML),
                           pREST->getTitle(OutputMode::PLAINTEXT),
                           htmlBody);
+
+        lxw.append("\n\\section{" + pREST->getTitle(OutputMode::LATEX) + "}\n");
+        lxw.append("\\label{" + pREST->makeTarget(fmtLatex) + "}\n");
+        lxw.append("\n" + pREST->formatComment(OutputMode::LATEX) + "\n");
     }
 
     Debug::Leave();
@@ -528,6 +540,9 @@ void writeTables(LatexWriter &lxw)
 {
     Debug::Enter(MAIN, "writing tables");
 
+    FormatterBase &fmtHTML = FormatterBase::Get(OutputMode::HTML);
+    FormatterBase &fmtLatex = FormatterBase::Get(OutputMode::LATEX);
+
     string strTitle = "SQL tables list";
     string htmlBody = "<h1>" + strTitle + "</h1>\n\n<ul>";
 
@@ -535,7 +550,7 @@ void writeTables(LatexWriter &lxw)
     {
         // const string &strTable = it.first;
         auto pTable = it.second;
-        htmlBody += "<li>" + pTable->makeLink(FormatterBase::Get(OutputMode::HTML));
+        htmlBody += "<li>" + pTable->makeLink(fmtHTML);
     }
 
     htmlBody += "</ul>\n";
@@ -545,9 +560,10 @@ void writeTables(LatexWriter &lxw)
                       strTitle,
                       htmlBody);
 
+    lxw.append("\n\\chapter{" + strTitle + "}\n");
+
     for (auto it : TableComment::GetAll())
     {
-        const string &strTable = it.first;
         auto pTable = it.second;
 
         htmlBody = "<h1>" + pTable->getTitle(OutputMode::HTML) + "</h1>\n";
@@ -555,9 +571,13 @@ void writeTables(LatexWriter &lxw)
         htmlBody += pTable->formatComment(OutputMode::HTML);
 
         HTMLWriter::Write(dirHTMLOut,
-                          "table_" + strTable + ".html",
+                          pTable->makeTarget(fmtHTML),
                           pTable->getTitle(OutputMode::PLAINTEXT),
                           htmlBody);
+
+        lxw.append("\n\\section{" + pTable->getTitle(OutputMode::LATEX) + "}\n");
+        lxw.append("\\label{" + pTable->makeTarget(fmtLatex) + "}\n");
+        lxw.append("\n" + pTable->formatComment(OutputMode::LATEX) + "\n");
     }
 
     Debug::Leave();
@@ -566,6 +586,9 @@ void writeTables(LatexWriter &lxw)
 void writeClasses(LatexWriter &lxw)
 {
     Debug::Enter(MAIN, "Writing class list");
+
+    FormatterBase &fmtHTML = FormatterBase::Get(OutputMode::HTML);
+    FormatterBase &fmtLatex = FormatterBase::Get(OutputMode::LATEX);
 
     string strTitle = "Class list";
     string htmlBody = "<h1>" + strTitle + "</h1>\n\n";
@@ -584,7 +607,6 @@ void writeClasses(LatexWriter &lxw)
             if (pParent)
             {
                 pParent->addChild(pClass);
-                Debug::Log(MAIN, "adding child $class to parent $parent");
             }
             else
             {
@@ -604,7 +626,7 @@ void writeClasses(LatexWriter &lxw)
         Debug::Log(MAIN, to_string(cParents) + " parents");
         if (!cParents || STL_EXISTS(stClassesWithBrokenParents, strClass))
             htmlThis +=   "<li>"
-                        + pClass->makeLink(FormatterBase::Get(OutputMode::HTML),
+                        + pClass->makeLink(fmtHTML,
                                            strClass,
                                            NULL)
                         + pClass->formatChildrenList()
@@ -620,6 +642,8 @@ void writeClasses(LatexWriter &lxw)
                       strTitle,
                       htmlBody);
 
+    lxw.append("\n\\chapter{" + strTitle + "}\n");
+
     Debug::Leave();
 
     /*
@@ -630,87 +654,27 @@ void writeClasses(LatexWriter &lxw)
 
     for (auto it : ClassComment::GetAll())
     {
-        const string &strClass = it.first;
         auto pClass = it.second;
 
         htmlBody = "<h1>" + pClass->getTitle(OutputMode::HTML) + "</h1>\n";
 
         htmlBody += pClass->formatComment(OutputMode::HTML);
 
+        lxw.append("\n\\section{" + pClass->getTitle(OutputMode::LATEX) + "}\n");
+        lxw.append("\\label{" + pClass->makeTarget(fmtLatex) + "}\n");
+        lxw.append("\n" + pClass->formatComment(OutputMode::LATEX) + "\n");
+
         htmlBody += "<h2>Hierarchy</h2>\n\n";
-        string htmlThis = "";
+        htmlBody += pClass->formatHierarchy(fmtHTML);
 
-        auto pllParents = pClass->getParents();
-        auto pllChildren = pClass->getChildren();
-        if (pllParents.size())
-        {
-            for (const string &strParent : pllParents)
-                htmlThis += "<a href=\"class_" + strParent + ".html\">" + strParent + "</a> &mdash; ";
-        }
+        lxw.append("\n\n\\textbf{Hierarchy:} ");
+        lxw.append(pClass->formatHierarchy(fmtLatex));
 
-        if (    (pllParents.size())
-             || (pllChildren.size())
-           )
-        {
-            htmlThis += "<b>" + strClass + "</b>";
-        }
-        else
-        {
-            htmlThis += "<p>This class stands alone and has neither parents nor children.</p>";
-        }
-
-        if (pllChildren.size())
-        {
-            htmlThis += " &mdash; ";
-            size_t c = 0;
-            for (auto pChild : pllChildren)
-            {
-                if (c)
-                    htmlThis += ", ";
-                const string &strChild = pChild->getIdentifier();
-                htmlThis += "<a href=\"class_" + strChild + ".html\">" + strChild + "</a>";
-                ++c;
-            }
-        }
-
-        htmlBody += htmlThis;
-
-        auto pllMembers = pClass->getMembers();
-        size_t cMembers = pllMembers.size();
-        Debug::Log(MAIN, "Class " + strClass + " has " + to_string(cMembers) + " members");
-        if (cMembers)
-        {
-            htmlBody += "<h2>" + to_string(cMembers) + " members</h2>\n\n";
-
-            htmlThis = "<ul>\n";
-            for (auto pMemberFunction : pllMembers)
-            {
-                const string &strIdentifier = pMemberFunction->getIdentifier();
-                htmlThis += "<li><a href=\"#" + strIdentifier + "\">";
-                htmlThis += pMemberFunction->formatFunction(false); // short
-                htmlThis += "</a></li>\n";
-            }
-            htmlThis += "</ul>\n";
-
-            htmlBody += htmlThis;
-
-            htmlBody += "\n<h2>Details</h2>\n";
-            htmlThis = "";
-
-            for (auto pMemberFunction : pllMembers)
-            {
-                const string &strIdentifier = pMemberFunction->getIdentifier();
-                htmlThis += "<dl><dt id=\"" + strIdentifier + "\">";
-                htmlThis += pMemberFunction->formatFunction(true) + "</dt>\n";
-                htmlThis += "<dd>" + pMemberFunction->formatComment(OutputMode::HTML) + "</dd></dl>";
-                htmlThis += "\n";
-            }
-
-            htmlBody += htmlThis;
-        }
+        htmlBody += pClass->formatMembers(fmtHTML);
+        lxw.append(pClass->formatMembers(fmtLatex));
 
         HTMLWriter::Write(dirHTMLOut,
-                          "class_" + strClass + ".html",
+                          pClass->makeTarget(fmtHTML),
                           pClass->getTitle(OutputMode::PLAINTEXT),
                           htmlBody);
     }
