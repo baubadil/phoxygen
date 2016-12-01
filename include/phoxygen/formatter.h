@@ -138,6 +138,10 @@ public:
         : FormatterBase(OutputMode::HTML)
     { }
 
+    /**
+    *  makeTarget() must return a link target for the given identifier.
+    *  The HTML variant must have a .html suffix.
+    */
     virtual string makeTarget(const string &prefix,
                               const string &identifier)  override
     {

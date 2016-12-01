@@ -256,7 +256,7 @@ public:
 
     string makeLink(FormatterBase &fmt)
     {
-        return fmt.makeLink("rest_" + getIdentifier(),
+        return fmt.makeLink(makeTarget(fmt),
                             NULL,
                             _strMethod + " /api/" + _strName);;
     }
@@ -420,7 +420,7 @@ public:
 
     virtual string getTitle(OutputMode mode) override;
 
-    string formatChildrenList();
+    string formatChildrenList(FormatterBase &fmt);
 
     string formatHierarchy(FormatterBase &fmt);
 

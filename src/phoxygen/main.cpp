@@ -629,7 +629,7 @@ void writeClasses(LatexWriter &lxw)
                         + pClass->makeLink(fmtHTML,
                                            strClass,
                                            NULL)
-                        + pClass->formatChildrenList()
+                        + pClass->formatChildrenList(fmtHTML)
                         + "</li>\n";
         Debug::Leave();
     }

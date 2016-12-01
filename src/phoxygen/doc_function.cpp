@@ -68,6 +68,9 @@ string FunctionComment::formatFunction(FormatterBase &fmt,
     //    |                      | arg3)                  | comment3            |
     //    +----------------------+------------------------+---------------------+
 
-    return fmt.makeFunctionHeader(_keyword, _identifier, _vParams, fLong);
+    return fmt.makeFunctionHeader(_keyword,
+                                  _identifier,
+                                  _vParams,
+                                  fLong);
 }
 

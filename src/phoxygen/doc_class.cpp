@@ -69,7 +69,7 @@ string ClassComment::getTitle(OutputMode mode) /* override */
     return "Class " + _identifier;
 }
 
-string ClassComment::formatChildrenList()
+string ClassComment::formatChildrenList(FormatterBase &fmt)
 {
     string htmlBody;
 
@@ -78,10 +78,10 @@ string ClassComment::formatChildrenList()
         htmlBody += "<ul>";
         for (auto pChild : _vChildren)
         {
-            const string &strIdentifier = pChild->getIdentifier();
-            htmlBody += "<li><a href=\"class_" + strIdentifier + ".html\">" + strIdentifier + "</a>";
+            htmlBody += "<li>" + pChild->makeLink(fmt, pChild->getIdentifier(), NULL);
 
-            htmlBody += pChild->formatChildrenList();
+            // Recurse!
+            htmlBody += pChild->formatChildrenList(fmt);
 
             htmlBody += "</li>\n";
         }
@@ -199,7 +199,7 @@ string ClassComment::makeLink(FormatterBase &fmt,
                               const string &strDisplay,
                               const string *pstrAnchor)
 {
-    return fmt.makeLink("class_" + _identifier,
+    return fmt.makeLink(makeTarget(fmt),
                         pstrAnchor,
                         strDisplay);
 }

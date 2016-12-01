@@ -12,7 +12,7 @@
 #include "xwp/stringhelp.h"
 #include "xwp/regex.h"
 
-#include "phoxygen/phoxygen.h"
+#include "phoxygen/formatter.h"
 
 FormatterPlain g_fmtPlain;
 FormatterHTML g_fmtHTML;
@@ -93,11 +93,11 @@ void FormatterHTML::convertFormatting(string &str) /* override */
 }
 
 /* virtual */
-string FormatterHTML::makeLink(const string &strIdentifier,     //!< in: including "table_" etc. prefix
+string FormatterHTML::makeLink(const string &strIdentifier,     //!< in: including "table_" etc. prefix and .html suffix
                                const string *pstrAnchor,
                                const string &strTitle) /* override */
 {
-    string str = "<a href=\"" + strIdentifier + ".html";
+    string str = "<a href=\"" + strIdentifier;
     if (pstrAnchor)
         str += "#" + *pstrAnchor;
     return str + "\">" + strTitle + "</a>";
@@ -170,6 +170,10 @@ const string FormatterLatex::Item = "\\item ";
 const string FormatterLatex::OpenTextTT = "\\texttt{";
 const string FormatterLatex::CloseCurly = "}";
 
+/**
+ *  makeTarget() must return a link target for the given identifier.
+ *  The LaTeX variant cannot have underscores.
+ */
 /* virtual */
 string FormatterLatex::makeTarget(const string &prefix,
                                   const string &identifier) /* override */
@@ -284,7 +288,6 @@ string FormatterLatex::makeFunctionHeader(const string &strKeyword,
             if (fLong)
                 str += " & ";
             string strParam = format(param.param, false);
-            ClassComment::LinkifyClasses(*this, strParam, NULL);
             strParam += (c == vParams.size()) ? ") " : ", ";
             str += makeCODE(strParam);
             if (fLong)
