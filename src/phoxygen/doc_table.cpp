@@ -91,7 +91,7 @@ string TableComment::formatComment(OutputMode mode) /* override */
             if ( (c > 1) && (c < cLines) )
                 str += "    ";
 
-            string htmlLine = fmt.format(line);
+            string htmlLine = fmt.format(line, true);
 
 //             for (auto it : g_mapTables)
 //             {

@@ -12,7 +12,7 @@
 #include "xwp/stringhelp.h"
 #include "xwp/regex.h"
 
-#include "phoxygen/formatter.h"
+#include "phoxygen/phoxygen.h"
 
 FormatterPlain g_fmtPlain;
 FormatterHTML g_fmtHTML;
@@ -68,7 +68,8 @@ const string FormatterHTML::CloseCODE = "</code>";
 const string FormatterHTML::MDash = " &mdash; ";
 
 /* virtual */
-string FormatterHTML::format(const string &str) /* override */
+string FormatterHTML::format(const string &str,
+                             bool fInPRE NO_WARN_UNUSED) /* override */
 {
     return ::toHTML2(str);
 }
@@ -86,7 +87,7 @@ void FormatterHTML::convertFormatting(string &str) /* override */
     reCode.findReplace(str, "<code>$1</code>", true);
 
     // Linkify links.
-    static const Regex reLink("(https?://\\S+)");
+    static const Regex reLink("(https?://\\S+[^.])");
             // "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)(([\\w\\-]+\\.){1,}?([\\w\\-.~]+\\/?)*[\\[a-zA-Z0-9].,%_=?&#\\-+()\\[\\]\\*$~@!:/{};']*)");
     reLink.findReplace(str, "<a href=\"$1\">$1</a>", true);
 }
@@ -109,6 +110,49 @@ string FormatterHTML::makeHeading(uint level, const string &str) /* override */
     return "\n<h" + strLevel + ">" + str + "</h" + strLevel + ">\n";
 }
 
+/* virtual */
+string FormatterHTML::makeFunctionHeader(const string &strKeyword,
+                                         const string &strIdentifier,
+                                         ParamsVector &vParams,
+                                         bool fLong) /* override */
+{
+    string str;
+
+    if (!vParams.size())
+        str = strKeyword + " " + makeBold(strIdentifier) + "()";
+    else
+    {
+        if (fLong)
+            str = "<table class=\"functable\"><tr><td style=\"white-space: nowrap;\">";
+        str += strKeyword + " " + makeBold(strIdentifier) + "(";
+        if (fLong)
+            str += "</td>";
+
+        size_t c = 0;
+        for (const auto &param : vParams)
+        {
+            ++c;
+            if (fLong)
+            {
+                if (c > 1)
+                    str += "<tr><td>&nbsp;</td>";
+                str += "<td>";
+            }
+            str += format(param.param, false);
+            str += (c == vParams.size()) ? ") " : ", ";
+            if (fLong)
+            {
+                str += "</td>\n<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>" + format(param.description, false);
+                str += "</i></td></tr>";
+            }
+        }
+        if (fLong)
+            str += "</table>";
+    }
+
+    return str;
+}
+
 
 /***************************************************************************
  *
@@ -119,9 +163,9 @@ string FormatterHTML::makeHeading(uint level, const string &str) /* override */
 const string FormatterLatex::BeginVerbatim = "\n\\begin{alltt}\n";
 const string FormatterLatex::EndVerbatim = "\n\\end{alltt}\n";
 const string FormatterLatex::BeginItemize = "\\begin{itemize}\n";
-const string FormatterLatex::EndItemize = "\n\\end{itemize}";
+const string FormatterLatex::EndItemize = "\n\\end{itemize}\n";
 const string FormatterLatex::BeginEnumerate = "\\begin{enumerate}\n";
-const string FormatterLatex::EndEnumerate = "\n\\end{enumerate}";
+const string FormatterLatex::EndEnumerate = "\n\\end{enumerate}\n";
 const string FormatterLatex::Item = "\\item ";
 const string FormatterLatex::OpenTextTT = "\\texttt{";
 const string FormatterLatex::CloseCurly = "}";
@@ -136,9 +180,9 @@ string FormatterLatex::makeTarget(const string &prefix,
 }
 
 /* virtual */
-string FormatterLatex::format(const string &str) /* override */
+string FormatterLatex::format(const string &str, bool fInPRE) /* override */
 {
-    return ::toLaTeX2(str);
+    return ::toLaTeX2(str, fInPRE);
 }
 
 /* virtual */
@@ -203,5 +247,54 @@ string FormatterLatex::makeHeading(uint level, const string &str) /* override */
         break;
     }
 
-    return str0 + format(str) + "}";
+    return str0 + format(str, false) + "}";
+}
+
+/* virtual */
+string FormatterLatex::makeFunctionHeader(const string &strKeyword,
+                                          const string &strIdentifier0,
+                                          ParamsVector &vParams,
+                                          bool fLong) /* override */
+{
+    string str;
+    string strIdentifier = makeBold(format(strIdentifier0, false));
+
+    if (!vParams.size())
+    {
+        str = strKeyword + " " + strIdentifier + "()";
+        if (fLong)
+            str = makeCODE(str);
+    }
+    else
+    {
+        if (fLong)
+        {
+            str += "\n\\begin{tabularx}{\\textwidth}{ l l X }\n";
+            str += "\\multicolumn{3}{l}{" + makeCODE(strKeyword) + "} \\\\\n";
+            str += makeCODE(strIdentifier + "(");
+        }
+        else
+            str = strKeyword + " " + strIdentifier + "(";
+
+        size_t c = 0;
+        for (const auto &param : vParams)
+        {
+            ++c;
+
+            if (fLong)
+                str += " & ";
+            string strParam = format(param.param, false);
+            ClassComment::LinkifyClasses(*this, strParam, NULL);
+            strParam += (c == vParams.size()) ? ") " : ", ";
+            str += makeCODE(strParam);
+            if (fLong)
+            {
+                str += " & \\textit{" + format(param.description, false) + "} \\\\\n";
+            }
+        }
+        if (fLong)
+            str += "\\hline\n\\end{tabularx}\n";
+    }
+
+    return str;
 }

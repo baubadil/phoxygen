@@ -34,8 +34,8 @@ string implode(const string &strGlue, const StringRefVector &v);
 
 void toHTML(string &str);
 string toHTML2(const string &str);
-void toLaTeX(string &ls);
-string toLaTeX2(const string &ls);
+void toLaTeX(string &ls, bool fInPRE);
+string toLaTeX2(const string &ls, bool fInPRE);
 
 void stringReplace(string &subject,
                    const string &search,

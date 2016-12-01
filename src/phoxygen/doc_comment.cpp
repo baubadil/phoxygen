@@ -38,7 +38,12 @@ string CommentBase::formatComment(OutputMode mode)
     };
     PState paraState = PState::INIT;
 
-    stringstream ss(_comment);
+    // Replace all \ref with @ref. This allows for using both syntaxes and also avoids problems with
+    // escaping \\ in LaTeX.
+    string strComment2 = _comment;
+    stringReplace(strComment2, "\\ref", "@ref");
+
+    stringstream ss(strComment2);
     string line;
 
     FormatterBase &fmt = FormatterBase::Get(mode);
@@ -61,7 +66,7 @@ string CommentBase::formatComment(OutputMode mode)
                 paraState = PState::INIT;
             }
             else
-                strOutput += fmt.format(line) + "\n";
+                strOutput += fmt.format(line, true) + "\n";
         }
         else if (s_reEmptyLine.matches(line))
         {
@@ -131,7 +136,7 @@ string CommentBase::formatComment(OutputMode mode)
             if (fPrependNewline)
                 strOutput += "\n";
 
-            strOutput += fmt.format(line);
+            strOutput += fmt.format(line, false);
 
             fPrependNewline = true;
         }
@@ -154,24 +159,20 @@ string CommentBase::formatComment(OutputMode mode)
     fmt.convertFormatting(strOutput);
 
     // Linkify all class names.
-    for (const auto &it : ClassComment::GetAll())
+    string strSelf;
+    const string *pstrSelf = NULL;
+    if (this->getType() == Type::CLASS)
     {
-        const string &strClass = it.first;
-        PClassComment pClass = it.second;
-
-        if (    (this->getType() == Type::CLASS)
-             && (this->getIdentifier() == strClass)
-           )
-            pClass->linkify(mode, strOutput, true);
-        else
-            pClass->linkify(mode, strOutput, false);
+        strSelf = this->getIdentifier();
+        pstrSelf = &strSelf;
     }
+    ClassComment::LinkifyClasses(fmt, strOutput, pstrSelf);
 
     // Resolve \refs to functions.
     // htmlComment =~ s/\\ref\s+([a-zA-Z_0-9]+::[a-zA-Z_0-9]+\(\))/resolveFunctionRef($1)/eg;
 
     // Resolve \refs to page IDs.
-    static const Regex s_reResolveRefs(R"i____(\\ref\s+([-a-zA-Z_0-9:\(]+))i____");
+    static const Regex s_reResolveRefs(R"i____(@ref\s+([-a-zA-Z0-9:\(\\_]+))i____");
     s_reResolveRefs.findReplace(strOutput,
                                 [&fmt, this](const StringVector &vMatches, string &strReplace)
                                 {
@@ -206,8 +207,13 @@ string CommentBase::formatComment(OutputMode mode)
  *  contents of what follows \ref, see the regexp in the code above.
  */
 string CommentBase::resolveExplicitRef(FormatterBase &fmt,
-                                       const string &strMatch)
+                                       const string &strMatch0)
 {
+    // In LaTeX mode, the ref has underscores escaped; then we need to unescape them.
+    string strMatch = strMatch0;
+    if (fmt.getMode() == OutputMode::LATEX)
+        stringReplace(strMatch, "\\_", "_");
+
     PTableComment pTable;
     PPageComment pPage;
     RegexMatches aMatches2;

@@ -89,7 +89,7 @@ string html2Latex(const string &html)
     stringReplace(ls, "&gt;", ">");
     stringReplace(ls, "&amp;", "&");
 
-    return toLaTeX2(ls);
+    return toLaTeX2(ls, false);
 }
 
 /***************************************************************************
@@ -190,7 +190,7 @@ void parseSources(StringVector &vFilenames)
                     s_reCommentShrinkleft.findReplace(lineTemp, "", false);
 
                     static const Regex s_reMainPage(R"i____(^\s*[\\@]mainpage\s+(.*))i____");
-                    static const Regex s_rePage(R"i____(^\s*[\\@]page\s+([a-zA-Z0-9_-]+)\s+(.*))i____");
+                    static const Regex s_rePage(R"i____(^\s*[\\@]page\s+([-_a-zA-Z0-9]+)\s+(.*))i____");
 
                     RegexMatches aMatches;
                     if (s_reMainPage.matches(lineTemp, aMatches))

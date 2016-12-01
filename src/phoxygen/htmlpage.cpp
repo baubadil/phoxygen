@@ -97,6 +97,9 @@ void LatexWriter::writeHeader(const string &strTitle)
 
 % \renewcommand*\familydefault{\ttdefault}
 
+\usepackage{textcomp}
+\usepackage{tabularx}
+
 \newcommand\mytitle{)i____" + strTitle + R"i____(}
 
 \title{\mytitle}

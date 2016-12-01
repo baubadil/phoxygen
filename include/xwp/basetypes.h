@@ -26,6 +26,8 @@ typedef vector<reference_wrapper<string>>   StringRefVector;
 
 } // namespace XWP
 
+#define NO_WARN_UNUSED __attribute__((unused))
+
 // Can be used with all STL containers that have "find" and "end" methods.
 #define STL_EXISTS(container, item) (container.find(item) != container.end())
 

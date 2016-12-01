@@ -11,6 +11,14 @@
 #ifndef FORMATTER_H
 #define FORMATTER_H
 
+struct Param
+{
+    string param;
+    string description;
+};
+typedef vector<Param> ParamsVector;
+
+
 enum class OutputMode
 {
     PLAINTEXT,
@@ -62,7 +70,11 @@ public:
 
     virtual const string& mdash() { return TwoDashes; }
 
-    virtual string format(const string &str) { return str; }
+    virtual string format(const string &str,
+                          bool fInPRE NO_WARN_UNUSED)
+    {
+        return str;
+    }
 
     virtual void convertFormatting(string &str) { };
 
@@ -78,9 +90,22 @@ public:
         return str;
     }
 
+    virtual string makeCODE(const string &str)
+    {
+        return str;
+    }
+
     virtual string makeHeading(uint level, const string &str)
     {
         return "\n\n" + str + "\n\n";
+    }
+
+    virtual string makeFunctionHeader(const string &strKeyword,
+                                      const string &strIdentifier,
+                                      ParamsVector &vParams,
+                                      bool fLong NO_WARN_UNUSED)
+    {
+        return strKeyword + " " + strIdentifier;
     }
 };
 
@@ -139,7 +164,7 @@ public:
 
     virtual const string& mdash() override { return MDash; }
 
-    virtual string format(const string &str) override;
+    virtual string format(const string &str, bool fInPRE) override;
 
     virtual void convertFormatting(string &str) override;
 
@@ -152,7 +177,17 @@ public:
         return "<b>" + str + "</b>";
     }
 
+    virtual string makeCODE(const string &str) override
+    {
+        return openCODE() + str + closeCODE();
+    }
+
     virtual string makeHeading(uint level, const string &str) override;
+
+    virtual string makeFunctionHeader(const string &strKeyword,
+                                      const string &strIdentifier,
+                                      ParamsVector &vParams,
+                                      bool fLong) override;
 };
 
 class FormatterLatex : public FormatterBase
@@ -189,7 +224,7 @@ public:
     virtual const string& openCODE() override { return OpenTextTT; }
     virtual const string& closeCODE() override { return CloseCurly; }
 
-    virtual string format(const string &str) override;
+    virtual string format(const string &str, bool fInPRE) override;
 
     virtual void convertFormatting(string &str) override;
 
@@ -199,10 +234,20 @@ public:
 
     virtual string makeBold(const string &str) override
     {
-        return "\\textbf{" + str + "}";
+        return "\\textbf{" + str + CloseCurly;
+    }
+
+    virtual string makeCODE(const string &str) override
+    {
+        return OpenTextTT + str + CloseCurly;
     }
 
     virtual string makeHeading(uint level, const string &str) override;
+
+    virtual string makeFunctionHeader(const string &strKeyword,
+                                      const string &strIdentifier,
+                                      ParamsVector &vParams,
+                                      bool fLong) override;
 };
 
 #endif // FORMATTER_H

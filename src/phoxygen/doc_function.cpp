@@ -61,11 +61,6 @@ void FunctionComment::processInputLine(const string &strLine,
 string FunctionComment::formatFunction(FormatterBase &fmt,
                                        bool fLong)
 {
-    string htmlBody;
-
-    auto &pllArgs = _vParams;
-    size_t cTotal = pllArgs.size();
-
     //    Build a table like this:
     //    +----------------------+------------------------+---------------------+
     //    |   funcname(          | arg1,                  | comment1            |
@@ -73,38 +68,6 @@ string FunctionComment::formatFunction(FormatterBase &fmt,
     //    |                      | arg3)                  | comment3            |
     //    +----------------------+------------------------+---------------------+
 
-    if (!cTotal)
-        htmlBody += _keyword + " " + fmt.makeBold(_identifier) + "()";
-    else
-    {
-        if (fLong)
-            htmlBody += "<table class=\"functable\"><tr><td style=\"white-space: nowrap;\">";
-        htmlBody += _keyword + " " + fmt.makeBold(_identifier) + "(";
-        if (fLong)
-            htmlBody += "</td>";
-
-        size_t c = 0;
-        for (const auto &param : pllArgs)
-        {
-            ++c;
-            if (fLong)
-            {
-                if (c > 1)
-                    htmlBody += "<tr><td>&nbsp;</td>";
-                htmlBody += "<td>";
-            }
-            htmlBody += fmt.format(param.param);
-            htmlBody += (c == cTotal) ? ") " : ", ";
-            if (fLong)
-            {
-                htmlBody += "</td>\n<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>" + fmt.format(param.description);
-                htmlBody += "</i></td></tr>";
-            }
-        }
-        if (fLong)
-            htmlBody += "</table>";
-    }
-
-    return htmlBody;
+    return fmt.makeFunctionHeader(_keyword, _identifier, _vParams, fLong);
 }
 

@@ -167,19 +167,28 @@ string toHTML2(const string &str)
     return strCopy;
 }
 
-void toLaTeX(string &ls)
+void toLaTeX(string &ls,
+             bool fInPRE)           //!< in: true if you're in a alltt environment (for PRE formatting)
 {
-    stringReplace(ls, "$", "\\$");
-    stringReplace(ls, "#", "\\#");
-    stringReplace(ls, "&", "\\&");
-    stringReplace(ls, "[", "\\[");
-    stringReplace(ls, "]", "\\]");
+    stringReplace(ls, "\\", "\\\\");
+    stringReplace(ls, "{", "\\{");
+    stringReplace(ls, "}", "\\}");
+    if (!fInPRE)
+    {
+        stringReplace(ls, "$", "\\$");
+        stringReplace(ls, "#", "\\#");
+        stringReplace(ls, "&", "\\&");
+        stringReplace(ls, "_", "\\_");
+        stringReplace(ls, "%", "\\%");
+        stringReplace(ls, "€", "\\texteuro{}");
+    }
 }
 
-string toLaTeX2(const string &ls)
+string toLaTeX2(const string &ls,
+                bool fInPRE)        //!< in: true if you're in a alltt environment (for PRE formatting)
 {
     string strCopy(ls);
-    toLaTeX(strCopy);
+    toLaTeX(strCopy, fInPRE);
     return strCopy;
 }
 

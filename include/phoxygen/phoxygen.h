@@ -430,7 +430,11 @@ public:
                     const string &strDisplay,
                     const string *pstrAnchor);
 
-    void linkify(OutputMode mode,
+    static void LinkifyClasses(FormatterBase &fmt,
+                               string &str,
+                               const string *pstrSelf);
+
+    void linkify(FormatterBase &fmt,
                  string &htmlComment,
                  bool fSelf);
 
@@ -446,13 +450,6 @@ public:
  *  FunctionComment
  *
  **************************************************************************/
-
-struct Param
-{
-    string param;
-    string description;
-};
-typedef vector<Param> ParamsVector;
 
 class FunctionComment : public CommentBase
 {

@@ -178,12 +178,15 @@ string ClassComment::formatMembers(FormatterBase &fmt)
         }
         else
         {
-            htmlBody += "\n\\begin{description}\n";
-
+//             htmlBody += fmt.openUL();
+            int c = 0;
             for (auto pMemberFunction : pllMembers)
-                htmlBody += "\\item[" + pMemberFunction->formatFunction(fmt, false) + "] --- " + pMemberFunction->formatComment(fmt.getMode());
-
-            htmlBody += "\n\\end{description}\n";
+            {
+                if (c++ > 0)
+                    htmlBody += "\\vspace{4mm}\n\n\\noindent{} ";
+                htmlBody += pMemberFunction->formatFunction(fmt, true) + "\n\n\\vspace{1mm}\\noindent{}" + pMemberFunction->formatComment(fmt.getMode());
+            }
+//             htmlBody += fmt.closeUL();
         }
 
 
@@ -201,18 +204,42 @@ string ClassComment::makeLink(FormatterBase &fmt,
                         strDisplay);
 }
 
+/* static */
+void ClassComment::LinkifyClasses(FormatterBase &fmt,
+                                  string &str,
+                                  const string *pstrSelf)
+{
+    for (const auto &it : GetAll())
+    {
+        const string &strClass = it.first;
+        PClassComment pClass = it.second;
+
+        if (pstrSelf && (strClass == *pstrSelf))
+            pClass->linkify(fmt, str, true);
+        else
+            pClass->linkify(fmt, str, false);
+    }
+}
+
+
 /**
  *  Called from CommentBase::formatComment() for each class to linkify class names.
  */
-void ClassComment::linkify(OutputMode mode,
-                           string &htmlComment,
+void ClassComment::linkify(FormatterBase &fmt,
+                           string &str,
                            bool fSelf)
 {
-    if (mode == OutputMode::HTML)
-        _reClass.findReplace(htmlComment,
-                            fSelf ? _strReplSelf
-                                : _strReplOther,
-                            true); // fGlobal
+    if (fmt.getMode() == OutputMode::HTML)
+        _reClass.findReplace(str,
+                             fSelf ? _strReplSelf
+                                   : _strReplOther,
+                             true); // fGlobal
+    else
+        _reClass.findReplace(str,
+                             "$1" + fmt.makeLink(makeTarget(fmt),
+                                                 NULL,
+                                                 _identifier) + "$2",
+                             true); // fGlobal
 }
 
 /* static */

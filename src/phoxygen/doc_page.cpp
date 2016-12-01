@@ -67,7 +67,7 @@ string PageComment::getTitle(OutputMode mode) /* override */
     }
 
     // LaTeX
-    return toLaTeX2(_title);
+    return toLaTeX2(_title, false);
 }
 
 /* static */
