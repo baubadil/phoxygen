@@ -47,12 +47,6 @@ void TableComment::processInputLine(const string &strLine,
 }
 
 /* virtual */
-string TableComment::makeTarget(FormatterBase &fmt) /* override */
-{
-    return fmt.makeTarget("table", _identifier);
-}
-
-/* virtual */
 string TableComment::getTitle(OutputMode mode) /* override */
 {
     switch (mode)

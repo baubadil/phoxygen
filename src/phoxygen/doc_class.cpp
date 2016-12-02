@@ -24,11 +24,16 @@ ClassComment::ClassComment(const string &strKeyword,
                   strComment,
                   strInputFile,
                   linenoFirst,
-                  linenoLast),
-      _reClass("(^|p>|\\s+)" + strIdentifier + "($|\\s|[.,!;])"),
-      _strReplSelf("$1<b>" + strIdentifier + "</b>$2"),
-      _strReplOther("$1<a href=\"class_" + strIdentifier + ".html\">" + strIdentifier + "</a>$2")
+                  linenoLast,
+                  "class_" + strIdentifier),
+      _reClassHTML("(^|p>|\\s)" + strIdentifier + "($|\\s|[.,!;])"),
+      _reClassLaTeX("(^|\\s)" + strIdentifier + "($|\\s|[.,!;])"),
+      _strReplSelfHTML("$1<b>" + strIdentifier + "</b>$2"),
+      _strReplOtherHTML("$1<a href=\"" + _strTargetHTML + "\">" + strIdentifier + "</a>$2")
 {
+    auto fmt = FormatterBase::Get(OutputMode::LATEX);
+    _strReplOtherLaTeX = "$1" + FormatterLatex::MakeLink(_strTargetLaTeX,
+                                                         _identifier) + "$2";
 }
 
 /* static */
@@ -55,12 +60,6 @@ void ClassComment::addMember(PFunctionComment pMember)
 {
     _vMembers.push_back(pMember);
     _mapMembers[pMember->getIdentifier()] = pMember;
-}
-
-/* virtual */
-string ClassComment::makeTarget(FormatterBase &fmt) /* override */
-{
-    return fmt.makeTarget("class", _identifier);
 }
 
 /* virtual */
@@ -103,7 +102,7 @@ string ClassComment::formatHierarchy(FormatterBase &fmt)
         {
             auto pParent = ClassComment::Find(strParent);
             if (pParent)
-                strFormatted += fmt.makeLink(pParent->makeTarget(fmt),
+                strFormatted += fmt.makeLink(pParent->getTarget(fmt),
                                              NULL,
                                              strParent) + fmt.mdash();
         }
@@ -129,7 +128,7 @@ string ClassComment::formatHierarchy(FormatterBase &fmt)
             if (c)
                 strFormatted += ", ";
             const string &strChild = pChild->getIdentifier();
-            strFormatted += fmt.makeLink(pChild->makeTarget(fmt), NULL, strChild);
+            strFormatted += fmt.makeLink(pChild->getTarget(fmt), NULL, strChild);
             ++c;
         }
     }
@@ -152,7 +151,7 @@ string ClassComment::formatMembers(FormatterBase &fmt)
         for (auto pMemberFunction : pllMembers)
         {
             const string &strIdentifier = pMemberFunction->getIdentifier();
-            htmlThis += fmt.openLI() + fmt.makeLink(this->makeTarget(fmt),
+            htmlThis += fmt.openLI() + fmt.makeLink(this->getTarget(fmt),
                                                     &strIdentifier,
                                                     pMemberFunction->formatFunction(fmt, false));
             htmlThis += fmt.closeLI();
@@ -199,7 +198,7 @@ string ClassComment::makeLink(FormatterBase &fmt,
                               const string &strDisplay,
                               const string *pstrAnchor)
 {
-    return fmt.makeLink(makeTarget(fmt),
+    return fmt.makeLink(getTarget(fmt),
                         pstrAnchor,
                         strDisplay);
 }
@@ -221,7 +220,6 @@ void ClassComment::LinkifyClasses(FormatterBase &fmt,
     }
 }
 
-
 /**
  *  Called from CommentBase::formatComment() for each class to linkify class names.
  */
@@ -230,16 +228,14 @@ void ClassComment::linkify(FormatterBase &fmt,
                            bool fSelf)
 {
     if (fmt.getMode() == OutputMode::HTML)
-        _reClass.findReplace(str,
-                             fSelf ? _strReplSelf
-                                   : _strReplOther,
+        _reClassHTML.findReplace(str,
+                             fSelf ? _strReplSelfHTML
+                                   : _strReplOtherHTML,
                              true); // fGlobal
     else
-        _reClass.findReplace(str,
-                             "$1" + fmt.makeLink(makeTarget(fmt),
-                                                 NULL,
-                                                 _identifier) + "$2",
-                             true); // fGlobal
+        _reClassLaTeX.findReplace(str,
+                                  _strReplOtherLaTeX,
+                                  true); // fGlobal
 }
 
 /* static */

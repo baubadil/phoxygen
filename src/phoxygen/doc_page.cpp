@@ -23,7 +23,8 @@ PageComment::PageComment(const string &strPageID,
                       "",
                       strInputFile,
                       linenoFirst,
-                      linenoLast)
+                      linenoLast,
+                      "page_" + strPageID)
 {
     _title = strTitle;
 }
@@ -43,12 +44,6 @@ PPageComment PageComment::Make(const string &strPageID,
     auto p = make_shared<Derived>(strPageID, strTitle, strInputFile, linenoFirst, linenoLast);
     g_mapPages[strPageID] = p;
     return p;
-}
-
-/* virtual */
-string PageComment::makeTarget(FormatterBase &fmt) /* override */
-{
-    return fmt.makeTarget("page", _identifier);
 }
 
 /* virtual */

@@ -17,16 +17,20 @@
 
 const string& RegexMatches::get(uint u)
 {
+    string strExcept;
     if (v.empty())
-        throw FSException("Invalid index " + to_string(u) + " into EMPTY regex matches");
+        strExcept = "Invalid index " + to_string(u) + " into EMPTY regex matches";
+    else
+    {
+        if (u < v.size())
+            return v[u];
 
-    if (u < v.size())
-        return v[u];
+        strExcept = "Invalid index " + to_string(u) + " into regex matches (0: \"" + v[0] + "\")";
+    }
 
-    string str = "Invalid index " + to_string(u) + " into regex matches (0: \"" + v[0] + "\")";
     if (pRE)
-        str += " -- size was " + to_string(v.size()) + " -- RE: \"" + pRE->toString() + "\"";
-    throw FSException(str);
+        strExcept += " -- size was " + to_string(v.size()) + " -- RE: \"" + pRE->toString() + "\"";
+    throw FSException(strExcept);
 }
 
 /**
@@ -366,6 +370,13 @@ size_t Regex::findReplace(string &strHaystack,
                            fGlobal);
 }
 
+/**
+ *  Splits strHaystack along "this" regex and puts the substrings into
+ *  the given StringVector.
+ *
+ *  If there was no match but strHaystack is not empty, then the vector
+ *  receives one instance of the whole strHaystack.
+ */
 void Regex::split(const string &strHaystack,
                   StringVector &sv) const
 {

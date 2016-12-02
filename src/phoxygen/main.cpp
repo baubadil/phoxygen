@@ -331,8 +331,8 @@ void parseSources(StringVector &vFilenames)
                         pCurrentClass->addMember(pLastFunction);
                     }
 
-                    pLastFunction->processInputLine(afterOpeningBracket,
-                                                    state);
+                    pLastFunction->parseArguments(afterOpeningBracket,
+                                                  state);
                 }
                 else if (s_reCreateTable.matches(strCurrentLine, aMatches))
                 {
@@ -398,7 +398,7 @@ void parseSources(StringVector &vFilenames)
             else if (state == State::IN_FUNCTION_HEADER)
             {
                 // Continuing function header:
-                pLastFunction->processInputLine(strCurrentLine, state);
+                pLastFunction->parseArguments(strCurrentLine, state);
             }
             else if (state == State::IN_CREATE_TABLE)
             {
@@ -471,12 +471,12 @@ void writePages(LatexWriter &lxw)
         htmlBody += pPage->formatComment(OutputMode::HTML);
 
         HTMLWriter::Write(dirHTMLOut,
-                          pPage->makeTarget(fmtHTML),
+                          pPage->getTarget(fmtHTML),
                           pPage->getTitle(OutputMode::PLAINTEXT),
                           htmlBody);
 
         lxw.append("\n\\section{" + pPage->getTitle(OutputMode::LATEX) + "}\n");
-        lxw.append("\\label{" + pPage->makeTarget(fmtLatex) + "}\n");
+        lxw.append("\\label{" + pPage->getTarget(fmtLatex) + "}\n");
         lxw.append("\n" + pPage->formatComment(OutputMode::LATEX) + "\n");
     }
 
@@ -524,12 +524,12 @@ void writeRESTAPIs(LatexWriter &lxw)
         htmlBody += pREST->formatComment(OutputMode::HTML);
 
         HTMLWriter::Write(dirHTMLOut,
-                          pREST->makeTarget(fmtHTML),
+                          pREST->getTarget(fmtHTML),
                           pREST->getTitle(OutputMode::PLAINTEXT),
                           htmlBody);
 
         lxw.append("\n\\section{" + pREST->getTitle(OutputMode::LATEX) + "}\n");
-        lxw.append("\\label{" + pREST->makeTarget(fmtLatex) + "}\n");
+        lxw.append("\\label{" + pREST->getTarget(fmtLatex) + "}\n");
         lxw.append("\n" + pREST->formatComment(OutputMode::LATEX) + "\n");
     }
 
@@ -571,12 +571,12 @@ void writeTables(LatexWriter &lxw)
         htmlBody += pTable->formatComment(OutputMode::HTML);
 
         HTMLWriter::Write(dirHTMLOut,
-                          pTable->makeTarget(fmtHTML),
+                          pTable->getTarget(fmtHTML),
                           pTable->getTitle(OutputMode::PLAINTEXT),
                           htmlBody);
 
         lxw.append("\n\\section{" + pTable->getTitle(OutputMode::LATEX) + "}\n");
-        lxw.append("\\label{" + pTable->makeTarget(fmtLatex) + "}\n");
+        lxw.append("\\label{" + pTable->getTarget(fmtLatex) + "}\n");
         lxw.append("\n" + pTable->formatComment(OutputMode::LATEX) + "\n");
     }
 
@@ -661,7 +661,7 @@ void writeClasses(LatexWriter &lxw)
         htmlBody += pClass->formatComment(OutputMode::HTML);
 
         lxw.append("\n\\section{" + pClass->getTitle(OutputMode::LATEX) + "}\n");
-        lxw.append("\\label{" + pClass->makeTarget(fmtLatex) + "}\n");
+        lxw.append("\\label{" + pClass->getTarget(fmtLatex) + "}\n");
         lxw.append("\n" + pClass->formatComment(OutputMode::LATEX) + "\n");
 
         htmlBody += "<h2>Hierarchy</h2>\n\n";
@@ -674,7 +674,7 @@ void writeClasses(LatexWriter &lxw)
         lxw.append(pClass->formatMembers(fmtLatex));
 
         HTMLWriter::Write(dirHTMLOut,
-                          pClass->makeTarget(fmtHTML),
+                          pClass->getTarget(fmtHTML),
                           pClass->getTitle(OutputMode::PLAINTEXT),
                           htmlBody);
     }

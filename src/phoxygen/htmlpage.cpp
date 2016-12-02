@@ -95,6 +95,9 @@ void LatexWriter::writeHeader(const string &strTitle)
 \usepackage{alltt}
 \usepackage[scaled]{beramono}
 
+\usepackage[]{mdframed}
+\newmdenv[linecolor=blue]{funcbox}
+
 % \renewcommand*\familydefault{\ttdefault}
 
 \usepackage{textcomp}

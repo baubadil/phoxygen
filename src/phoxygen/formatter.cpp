@@ -14,9 +14,39 @@
 
 #include "phoxygen/formatter.h"
 
+
+/***************************************************************************
+ *
+ *  Globals
+ *
+ **************************************************************************/
+
 FormatterPlain g_fmtPlain;
 FormatterHTML g_fmtHTML;
 FormatterLatex g_fmtLatex;
+
+
+/***************************************************************************
+ *
+ *  Param
+ *
+ **************************************************************************/
+
+
+Param::Param(const string &type,
+             const string &argname,
+             const string &strDefaultArg,
+             const string &descr,
+             const string &strTypeFormattedHTML,
+             const string &strTypeFormattedLaTeX)
+    : _type(type),
+      _argname(argname),
+      _defaultArg(strDefaultArg),
+      _description(descr),
+      _strTypeFormattedHTML(strTypeFormattedHTML),
+      _strTypeFormattedLaTeX(strTypeFormattedLaTeX)
+{
+}
 
 /***************************************************************************
  *
@@ -138,11 +168,14 @@ string FormatterHTML::makeFunctionHeader(const string &strKeyword,
                     str += "<tr><td>&nbsp;</td>";
                 str += "<td>";
             }
-            str += format(param.param, false);
+
+            if (!param._strTypeFormattedHTML.empty())
+                str += param._strTypeFormattedHTML + " ";
+            str += format(param._argname, false);
             str += (c == vParams.size()) ? ") " : ", ";
             if (fLong)
             {
-                str += "</td>\n<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>" + format(param.description, false);
+                str += "</td>\n<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>" + format(param._description, false);
                 str += "</i></td></tr>";
             }
         }
@@ -169,19 +202,6 @@ const string FormatterLatex::EndEnumerate = "\n\\end{enumerate}\n";
 const string FormatterLatex::Item = "\\item ";
 const string FormatterLatex::OpenTextTT = "\\texttt{";
 const string FormatterLatex::CloseCurly = "}";
-
-/**
- *  makeTarget() must return a link target for the given identifier.
- *  The LaTeX variant cannot have underscores.
- */
-/* virtual */
-string FormatterLatex::makeTarget(const string &prefix,
-                                  const string &identifier) /* override */
-{
-    string str = identifier;
-    stringReplace(str, "_", "@");
-    return prefix + "@" + str;
-}
 
 /* virtual */
 string FormatterLatex::format(const string &str, bool fInPRE) /* override */
@@ -227,9 +247,14 @@ string FormatterLatex::makeLink(const string &strIdentifier,
                                 const string *pstrAnchor,
                                 const string &strTitle)
 {
-    string str = strIdentifier;
-    stringReplace(str, "_", "@");
-    return "\\hyperref[" + str + "]{" + strTitle + "}";
+    return MakeLink(strIdentifier, strTitle);
+}
+
+/* static */
+string FormatterLatex::MakeLink(const string &strIdentifier,
+                                const string &strTitle)
+{
+    return "\\hyperref[" + strIdentifier + "]{" + strTitle + "}";
 }
 
 /* virtual */
@@ -273,6 +298,7 @@ string FormatterLatex::makeFunctionHeader(const string &strKeyword,
     {
         if (fLong)
         {
+            str += "\n\\begin{funcbox}";
             str += "\n\\begin{tabularx}{\\textwidth}{ l l X }\n";
             str += "\\multicolumn{3}{l}{" + makeCODE(strKeyword) + "} \\\\\n";
             str += makeCODE(strIdentifier + "(");
@@ -287,16 +313,17 @@ string FormatterLatex::makeFunctionHeader(const string &strKeyword,
 
             if (fLong)
                 str += " & ";
-            string strParam = format(param.param, false);
-            strParam += (c == vParams.size()) ? ") " : ", ";
-            str += makeCODE(strParam);
+            if (!param._strTypeFormattedLaTeX.empty())
+                str += param._strTypeFormattedLaTeX + " ";
+            str += format(param._argname, false);
+            str += (c == vParams.size()) ? ") " : ", ";
             if (fLong)
             {
-                str += " & \\textit{" + format(param.description, false) + "} \\\\\n";
+                str += " & \\textit{" + format(param._description, false) + "} \\\\\n";
             }
         }
         if (fLong)
-            str += "\\hline\n\\end{tabularx}\n";
+            str += "\\end{tabularx}\n\\end{funcbox}\n";
     }
 
     return str;

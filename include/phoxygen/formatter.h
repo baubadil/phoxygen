@@ -13,11 +13,22 @@
 
 struct Param
 {
-    string param;
-    string description;
+    string _type;            // optiponal
+    string _argname;         // including leading & and $
+    string _defaultArg;      // optional, everything after =\s*
+    string _description;
+
+    string _strTypeFormattedHTML;
+    string _strTypeFormattedLaTeX;
+
+    Param(const string &type,
+          const string &argname,
+          const string &strDefaultArg,
+          const string &descr,
+          const string &strTypeFormattedHTML,
+          const string &strTypeFormattedLaTeX);
 };
 typedef vector<Param> ParamsVector;
-
 
 enum class OutputMode
 {
@@ -46,9 +57,6 @@ public:
     {
         return _mode;
     }
-
-    virtual string makeTarget(const string &prefix,
-                              const string &identifier) { return Empty; }
 
     virtual const string& openPara() { return Empty; }
     virtual const string& closePara() { return TwoNewlines; }
@@ -102,7 +110,7 @@ public:
 
     virtual string makeFunctionHeader(const string &strKeyword,
                                       const string &strIdentifier,
-                                      ParamsVector &vParams,
+                                      ParamsVector &vParams NO_WARN_UNUSED,
                                       bool fLong NO_WARN_UNUSED)
     {
         return strKeyword + " " + strIdentifier;
@@ -137,16 +145,6 @@ public:
     FormatterHTML()
         : FormatterBase(OutputMode::HTML)
     { }
-
-    /**
-    *  makeTarget() must return a link target for the given identifier.
-    *  The HTML variant must have a .html suffix.
-    */
-    virtual string makeTarget(const string &prefix,
-                              const string &identifier)  override
-    {
-        return prefix + "_" + identifier + ".html";
-    }
 
     virtual const string& openPara() override { return OpenP; }
     virtual const string& closePara() override { return CloseP; }
@@ -211,9 +209,6 @@ public:
         : FormatterBase(OutputMode::LATEX)
     { }
 
-    virtual string makeTarget(const string &prefix,
-                              const string &identifier)  override;
-
     virtual const string& openPRE() override { return BeginVerbatim; }
     virtual const string& closePRE() override { return EndVerbatim; }
 
@@ -235,6 +230,9 @@ public:
     virtual string makeLink(const string &strIdentifier,
                             const string *pstrAnchor,
                             const string &strTitle) override;
+
+    static string MakeLink(const string &strIdentifier,
+                           const string &strTitle);
 
     virtual string makeBold(const string &str) override
     {

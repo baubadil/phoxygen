@@ -16,6 +16,33 @@
 
 const string CommentBase::s_strUnknown = "Unknown";
 
+CommentBase::CommentBase(Type theType,
+                         const string &strKeyword,
+                         const string &strIdentifier,
+                         const string &strComment,
+                         const string &strFile,
+                         int linenoFirst,
+                         int linenoLast,
+                         const string &strTargetBase)
+    : _type(theType),
+        _keyword(strKeyword),
+        _identifier(strIdentifier),
+        _comment(strComment),
+        _file(strFile),
+        _linenoFirst(linenoFirst),
+        _linenoLast(linenoLast)
+{
+    if (!strTargetBase.empty())
+        makeTargets(strTargetBase);
+};
+
+void CommentBase::makeTargets(const string &strTargetBase)
+{
+    _strTargetHTML = strTargetBase + ".html";
+    _strTargetLaTeX = strTargetBase;
+    stringReplace(_strTargetLaTeX, "_", "@");
+}
+
 string CommentBase::formatContext()
 {
     return _file + " (lines " + to_string(_linenoFirst) + "--" + to_string(_linenoLast) + ")";

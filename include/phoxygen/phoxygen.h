@@ -83,13 +83,16 @@ protected:
         REST
     };
 
-    Type _type;
-    string _keyword;
-    string _identifier;
-    string _comment;
-    string _file;
-    int _linenoFirst;
-    int _linenoLast;
+    Type    _type;
+    string  _keyword;
+    string  _identifier;
+    string  _comment;
+    string  _file;
+    int     _linenoFirst;
+    int     _linenoLast;
+
+    string  _strTargetHTML,
+            _strTargetLaTeX;
 
     CommentBase(Type theType,
                 const string &strKeyword,
@@ -97,15 +100,10 @@ protected:
                 const string &strComment,
                 const string &strFile,
                 int linenoFirst,
-                int linenoLast)
-        : _type(theType),
-          _keyword(strKeyword),
-          _identifier(strIdentifier),
-          _comment(strComment),
-          _file(strFile),
-          _linenoFirst(linenoFirst),
-          _linenoLast(linenoLast)
-    { };
+                int linenoLast,
+                const string &strTargetBase);
+
+    void makeTargets(const string &strTargetBase);
 
 public:
     Type getType() const
@@ -118,11 +116,10 @@ public:
         return _identifier;
     }
 
-    /**
-     *  makeTarget() must produce the target filename for HTML mode (including the .html suffix),
-     *  which can also be used as a link target, or the label for LaTeX mode.
-     */
-    virtual string makeTarget(FormatterBase &fmt) = 0;
+    const string getTarget(FormatterBase &fmt)
+    {
+        return (fmt.getMode() == OutputMode::HTML) ? _strTargetHTML : _strTargetLaTeX;
+    }
 
     virtual string getTitle(OutputMode mode)
     {
@@ -177,13 +174,11 @@ public:
                              int linenoFirst,
                              int linenoLast);
 
-    virtual string makeTarget(FormatterBase &fmt) override;
-
     virtual string getTitle(OutputMode mode) override;
 
     string makeLink(FormatterBase &fmt)
     {
-        return fmt.makeLink(makeTarget(fmt),
+        return fmt.makeLink(getTarget(fmt),
                             NULL,
                             getTitle(fmt.getMode()));
     }
@@ -250,13 +245,11 @@ public:
                              int linenoFirst,
                              int linenoLast);
 
-    virtual string makeTarget(FormatterBase &fmt) override;
-
     virtual string getTitle(OutputMode mode) override;
 
     string makeLink(FormatterBase &fmt)
     {
-        return fmt.makeLink(makeTarget(fmt),
+        return fmt.makeLink(getTarget(fmt),
                             NULL,
                             _strMethod + " /api/" + _strName);;
     }
@@ -302,7 +295,8 @@ class TableComment : public CommentBase
                       strComment,
                       strInputFile,
                       linenoFirst,
-                      linenoLast)
+                      linenoLast,
+                      "table_" + strIdentifier)
     { }
 
 public:
@@ -314,15 +308,13 @@ public:
 
     void processInputLine(const string &strLine, State &state);
 
-    virtual string makeTarget(FormatterBase &fmt) override;
-
     virtual string getTitle(OutputMode mode) override;
 
     virtual string formatComment(OutputMode mode) override;
 
     string makeLink(FormatterBase &fmt)
     {
-        return fmt.makeLink("table_" + _identifier, NULL, _identifier);
+        return fmt.makeLink(getTarget(fmt), NULL, _identifier);
     }
 
     static const TablesMap& GetAll();
@@ -349,10 +341,12 @@ class ClassComment : public CommentBase
     StringVector        _vExtends;
 
     // Regex for class linkification. Instantiate them in the class data so we don't have to recompile them.
-    Regex               _reClass;
+    Regex               _reClassHTML;
+    Regex               _reClassLaTeX;
 
-    string              _strReplSelf;
-    string              _strReplOther;
+    string              _strReplSelfHTML;
+    string              _strReplOtherHTML;
+    string              _strReplOtherLaTeX;
 
     ClassComment(const string &strKeyword,
                  const string &strIdentifier,
@@ -416,8 +410,6 @@ public:
         return _vMembers;
     }
 
-    virtual string makeTarget(FormatterBase &fmt) override;
-
     virtual string getTitle(OutputMode mode) override;
 
     string formatChildrenList(FormatterBase &fmt);
@@ -469,7 +461,8 @@ public:
                       strComment,
                       strInputFile,
                       linenoFirst,
-                      linenoLast)
+                      linenoLast,
+                      "")
     { }
 
     /**
@@ -480,11 +473,11 @@ public:
         return _pClass.get();
     }
 
-    virtual string makeTarget(FormatterBase &fmt) override;
-
     void setClass(PClassComment pClass);
 
-    void processInputLine(const string &strLine, State &state);
+    void parseParam(string &oneParam, const string &descr);
+
+    void parseArguments(const string &strLine, State &state);
 
     string formatFunction(FormatterBase &fmt, bool fLong);
 };

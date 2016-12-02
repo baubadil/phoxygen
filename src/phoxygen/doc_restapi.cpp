@@ -25,12 +25,15 @@ RESTComment::RESTComment(const string &strMethod,
                   strComment,
                   strInputFile,
                   linenoFirst,
-                  linenoLast)
+                  linenoLast,
+                  "")
 {
     _strMethod = strToUpper(strMethod);
     _identifier = RESTComment::MakeIdentifier(_strMethod, strName);
+    makeTargets(_identifier);
     _strName = strName;
     _strArgs = strArgs;
+
 }
 
 /* static */
@@ -59,12 +62,6 @@ PRESTComment RESTComment::Make(const string &strMethod,
                                   linenoLast);
     g_mapRESTComments[p->getIdentifier()] = p;
     return p;
-}
-
-/* virtual */
-string RESTComment::makeTarget(FormatterBase &fmt) /* override */
-{
-    return fmt.makeTarget("rest", _identifier);
 }
 
 /* virtual */
