@@ -15,6 +15,8 @@
 
 #include "pcre.h"
 
+#include <fstream>
+
 const string& RegexMatches::get(uint u)
 {
     string strExcept;
@@ -404,18 +406,15 @@ const string& Regex::toString() const
     return _pImpl->_str;
 }
 
-/* static */
-// string Regex::FindInFile(const string &strFilename,
-//                          const string &strRegex)
-// {
-//     ifstream ifs(strFilename);
-//     string strLine;
-//     regex reLine(strRegex);
-//     smatch match;
-//
-//     while (getline(ifs, strLine))
-//         if (regex_match(strLine, match, reLine))
-//             return match.str(1);
-//
-//     return "";
-// }
+bool Regex::findInFile(const string &strFilename,
+                       RegexMatches &aMatches)
+{
+    ifstream ifs(strFilename);
+    string strLine;
+
+    while (getline(ifs, strLine))
+        if (matches(strLine, aMatches))
+            return true;
+
+    return false;
+}

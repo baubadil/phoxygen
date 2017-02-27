@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -39,6 +39,20 @@ enum class AnsiColor
 
 typedef uint DebugFlag;
 const DebugFlag DEBUG_ALWAYS          = 0;
+
+    // low-level
+const DebugFlag XWPTAGS         = (1 <<  1);
+const DebugFlag FILE_LOW        = (1 <<  3);
+
+    // mid-level
+const DebugFlag FILE_MID        = (1 << 15);
+
+    // high-level
+const DebugFlag CMD_TOP         = (1 << 20);
+
+#define DFL(a) (a)
+const DebugFlag g_dflLevel1 =   DFL(CMD_TOP);
+#undef DFL
 
 const uint8_t NO_ECHO_NEWLINE           = 0x01;
 const uint8_t CONTINUE_FROM_PREVIOUS    = 0x02;

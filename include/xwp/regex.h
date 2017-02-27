@@ -94,8 +94,7 @@ public:
 
     const string& toString() const;
 
-    static string FindInFile(const string &strFilename,
-                             const string &strRegex);
+    bool findInFile(const string &strFilename, RegexMatches &aMatches);
 };
 
 #endif

@@ -50,6 +50,7 @@ bool endsWith(const string &strHaystack,
               const string &strEnd);
 string makePath(const string &str1,
                 const string &str2);
+string quote(const string &str1);
 
 } // namespace XWP
 

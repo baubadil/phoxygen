@@ -251,4 +251,10 @@ string makePath(const string &str1,
     return s + str2;
 }
 
+string quote(const string &str)
+{
+    return "\"" + str + "\"";
+}
+
+
 } // namespace XWP
