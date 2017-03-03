@@ -50,9 +50,9 @@ const DebugFlag FILE_MID        = (1 << 15);
     // high-level
 const DebugFlag CMD_TOP         = (1 << 20);
 
-#define DFL(a) (a)
-const DebugFlag g_dflLevel1 =   DFL(CMD_TOP);
-#undef DFL
+// #define DFL(a) (a)
+// const DebugFlag g_dflLevel1 =   DFL(CMD_TOP);
+// #undef DFL
 
 const uint8_t NO_ECHO_NEWLINE           = 0x01;
 const uint8_t CONTINUE_FROM_PREVIOUS    = 0x02;
