@@ -11,3 +11,4 @@ xwp_SOURCES += \
 	src/xwp/exec.cpp \
 	src/xwp/regex.cpp \
 	src/xwp/stringhelp.cpp \
+	src/xwp/worker.cpp
