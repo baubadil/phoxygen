@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -9,8 +9,15 @@
  */
 
 #include "xwp/exec.h"
+#include "xwp/stringhelp.h"
+#include "xwp/except.h"
 
 #include <memory>
+
+#include <unistd.h>
+#include <string.h>
+
+using namespace std;
 
 namespace XWP
 {
@@ -30,4 +37,40 @@ string exec(const string &cmd)
     return result;
 }
 
+/**
+ *  Attempts to return the absolute path of the executable from argv[0].
+ *  This can throw if realpath or getenv fail. Works on Unixish systems only.q
+ */
+string getExecutableFileName(const char *argv0)
+{
+    // If we have an absolute path we're done.
+    if (*argv0 != '/')
+    {
+        char szBuf[1024];
+        // If we don't then it's complicated.
+        // If there is a slash in the file name, then we assume it's relative to the CWD.
+        if (strchr(argv0, '/'))
+        {
+            if (!realpath(argv0, szBuf))
+                throw FSException("Cannot resolve real path for argv[0]");
+            return szBuf;
+        }
+        else
+        {
+            // No '/' in filename: then search PATH.
+            string strPath(getenv("PATH"));
+            string strExec(argv0);
+            for (string strDir : explodeSet(strPath, ":"))
+            {
+                string strFile = makePath(strDir, strExec);
+                if (access(strFile.c_str(), F_OK) != -1)
+                    if (realpath(strFile.c_str(), szBuf))
+                        return szBuf;
+            }
+        }
+    }
+
+    return argv0;
 }
+
+} // namespace XWPq

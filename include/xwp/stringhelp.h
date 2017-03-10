@@ -48,9 +48,15 @@ bool startsWith(const string &strHaystack,
                 const string &strStart);
 bool endsWith(const string &strHaystack,
               const string &strEnd);
+
+string quote(const string &str1);
+
 string makePath(const string &str1,
                 const string &str2);
-string quote(const string &str1);
+
+string getDirnameString(const string& str);
+string getBasenameString(const string &str);
+
 
 } // namespace XWP
 

@@ -13,6 +13,8 @@
 #include <functional>
 #include <algorithm>
 
+#include <string.h>
+
 namespace XWP
 {
 
@@ -240,6 +242,11 @@ bool endsWith(const string &strHaystack,
     return false;
 }
 
+string quote(const string &str)
+{
+    return "\"" + str + "\"";
+}
+
 string makePath(const string &str1,
                 const string &str2)
 {
@@ -251,10 +258,24 @@ string makePath(const string &str1,
     return s + str2;
 }
 
-string quote(const string &str)
+/* static */
+string getDirnameString(const string& str)
 {
-    return "\"" + str + "\"";
+    const char *p1 = str.c_str();
+    const char *p2 = strrchr(p1, '/');
+    if (p2)
+        return str.substr(0, p2 - p1);
+    return "";
 }
 
+/* static */
+string getBasenameString(const string &str)
+{
+    const char *p1 = str.c_str();
+    const char *p2 = strrchr(p1, '/');
+    if (p2)
+        return p2 + 1;
+    return str;
+}
 
 } // namespace XWP
