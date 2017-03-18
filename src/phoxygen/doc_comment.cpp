@@ -78,7 +78,7 @@ string CommentBase::formatComment(OutputMode mode)
     while(std::getline(ss, line, '\n'))
     {
         static const Regex s_reEmptyLine(R"i____(^\s*$)i____");
-        static const Regex s_reOpenPRE(R"i____(^\s*```(?:php|javascript|xml)\s*$)i____");
+        static const Regex s_reOpenPRE(R"i____(^\s*```(?:php|javascript|xml|sql)\s*$)i____");
         static const Regex s_reClosePRE(R"i____(^\s*```\s*$)i____");
         if (s_reOpenPRE.matches(line))
         {
@@ -114,7 +114,7 @@ string CommentBase::formatComment(OutputMode mode)
                     strOutput += fmt.closeLI();
 
                 static const Regex s_reOpenUL(R"i____(^\s+(?:--?|\*)\s+)i____");
-                static const Regex s_reOpenOL(R"i____(^\s+\d+[.)]\s+)i____");
+                static const Regex s_reOpenOL(R"i____(^\s+(?:\d+[.)]|[a-z]\))\s+)i____");
                 RegexMatches aMatches;
                 if (s_reOpenUL.matches(line))
                 {
@@ -139,7 +139,7 @@ string CommentBase::formatComment(OutputMode mode)
                     strOutput += fmt.openLI();
                     paraState = PState::OL;
 
-                    static const Regex s_stripNumber(R"i____(^\s+\d+[.)]\s+)i____");
+                    static const Regex s_stripNumber(R"i____(^\s+[a-z0-9]+[.)]\s+)i____");
                     s_stripNumber.findReplace(line, " ", false);
                 }
                 else
