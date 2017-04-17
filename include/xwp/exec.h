@@ -8,8 +8,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the LICENSE file for more details.
  */
 
-#ifndef XWP_EXEX_H
-#define XWP_EXEX_H
+#ifndef XWP_EXEC_H
+#define XWP_EXEC_H
 
 #include <string>
 
@@ -22,4 +22,4 @@ std::string getExecutableFileName(const char *argv0);
 
 }
 
-#endif // XWP_EXEX_H
+#endif // XWP_EXEC_H
