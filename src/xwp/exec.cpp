@@ -22,7 +22,8 @@ using namespace std;
 namespace XWP
 {
 
-string exec(const string &cmd)
+string
+exec(const string &cmd)
 {
     char buffer[128];
     string result = "";
@@ -41,7 +42,8 @@ string exec(const string &cmd)
  *  Attempts to return the absolute path of the executable from argv[0].
  *  This can throw if realpath or getenv fail. Works on Unixish systems only.q
  */
-string getExecutableFileName(const char *argv0)
+string
+getExecutableFileName(const char *argv0)
 {
     // If we have an absolute path we're done.
     if (*argv0 != '/')

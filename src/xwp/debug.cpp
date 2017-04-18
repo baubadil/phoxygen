@@ -1,6 +1,6 @@
 /*
  * phoxygen -- PHP documentation tool. (C) 2015--2016 Baubadil GmbH.
- * 
+ *
  * phoxygen is free software; you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, in version 2 as it comes
  * in the "LICENSE" file of the phoxygen main distribution. This program is distributed in the hope
@@ -115,7 +115,8 @@ void Debug::Message(const string &str,
 #define ANSI_COLOR_RESET        "\x1b[0m"
 #define ANSI_COLOR_WHITE_BRIGHT "\x1b[37;1m"
 
-string Debug::MakeColor(AnsiColor c, string str)
+string
+Debug::MakeColor(AnsiColor c, string str)
 {
     switch (c)
     {
@@ -155,7 +156,8 @@ string Debug::MakeColor(AnsiColor c, string str)
     return str;
 }
 
-void Debug::Warning(const string& str)
+void
+Debug::Warning(const string& str)
 {
     Log(DEBUG_ALWAYS, MakeColor(AnsiColor::YELLOW, str));
 }
