@@ -24,6 +24,14 @@ typedef set<string>                         StringSet;
 typedef vector<string>                      StringVector;
 typedef vector<reference_wrapper<string>>   StringRefVector;
 
+class ProhibitCopy
+{
+public:
+    ProhibitCopy() {};
+    ProhibitCopy(const ProhibitCopy&) = delete;
+    ProhibitCopy& operator=(const ProhibitCopy&) = delete;
+};
+
 } // namespace XWP
 
 #define NO_WARN_UNUSED __attribute__((unused))

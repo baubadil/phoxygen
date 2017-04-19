@@ -13,6 +13,8 @@
 
 #include <mutex>
 
+#include "xwp/basetypes.h"
+
 namespace XWP
 {
 
@@ -22,7 +24,7 @@ namespace XWP
  *
  **************************************************************************/
 
-class Lock
+class Lock : public ProhibitCopy
 {
 public:
     Lock(std::recursive_mutex &m)
@@ -48,7 +50,6 @@ protected:
     std::recursive_mutex    &_m;
     bool                    _fLocked = false;
 };
-
 
 }
 
