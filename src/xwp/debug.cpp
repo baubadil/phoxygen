@@ -9,6 +9,7 @@
  */
 
 #include "xwp/debug.h"
+#include "xwp/lock.h"
 
 #include <list>
 #include <iostream>
@@ -23,37 +24,49 @@ struct FuncItem
     string strFuncName;
 };
 
-list<FuncItem> g_llFuncs;
-uint g_iIndent = 0;
-bool g_fNeedsNewline = false;
+std::recursive_mutex g_mutexDebug;
+
+class DebugLock : public XWP::Lock
+{
+public:
+    DebugLock()
+        : Lock(g_mutexDebug)
+    { }
+};
+
+list<FuncItem> g_llFuncs2;
+uint g_iIndent2 = 0;
+bool g_fNeedsNewline2 = false;
 
 /* static */
 void Debug::Enter(DebugFlag fl,
                   const string &strFuncName,
                   const string &strExtra /* = "" */ )
 {
+    DebugLock lock;
     if ( (fl == DEBUG_ALWAYS) || (g_flDebugSet & (uint)fl) )
     {
         string str2("Entering " + strFuncName);
         if (strExtra.length())
             str2.append(": " + strExtra);
         Debug::Log(fl, str2);
-        ++g_iIndent;
+        ++g_iIndent2;
     }
-    g_llFuncs.push_back({fl, strFuncName});
+    g_llFuncs2.push_back({fl, strFuncName});
 }
 
 /* static */
 void Debug::Leave(const string &strExtra /* = "" */)
 {
-    if (!g_llFuncs.empty())
+    DebugLock lock;
+    if (!g_llFuncs2.empty())
     {
-        FuncItem f = g_llFuncs.back();      // Make a copy.
-        g_llFuncs.pop_back();
+        FuncItem f = g_llFuncs2.back();      // Make a copy.
+        g_llFuncs2.pop_back();
 
         if ( (f.fl == DEBUG_ALWAYS) || (g_flDebugSet & (uint)f.fl) )
         {
-            --g_iIndent;
+            --g_iIndent2;
             string s = "Leaving " + f.strFuncName;
             if (!strExtra.empty())
                 s += " (" + strExtra + ")";
@@ -67,30 +80,31 @@ void Debug::Log(DebugFlag fl,
                 const string &str,
                 uint8_t flMessage /* = 0 */)
 {
+    DebugLock lock;
     bool fAlways;
     if (    (fAlways = (fl == DEBUG_ALWAYS))
          || (g_flDebugSet & (uint)fl)
        )
     {
-        if (g_fNeedsNewline)
+        if (g_fNeedsNewline2)
         {
             if (0 == (flMessage & CONTINUE_FROM_PREVIOUS))
                 cout << "\n";
-            g_fNeedsNewline = false;
+            g_fNeedsNewline2 = false;
         }
 
         string strIndent;
-        if (fAlways && (g_iIndent > 0))
-            cout << MakeColor(AnsiColor::BRIGHT_WHITE, ">") << string(g_iIndent * 2 - 1, ' ');
+        if (fAlways && (g_iIndent2 > 0))
+            cout << MakeColor(AnsiColor::BRIGHT_WHITE, ">") << string(g_iIndent2 * 2 - 1, ' ');
         else
-            cout << string(g_iIndent * 2, ' ');
+            cout << string(g_iIndent2 * 2, ' ');
         cout << str;
         if ( (!fAlways) || (0 == (flMessage & NO_ECHO_NEWLINE)) )
             cout << "\n";
         else
         {
             cout.flush();
-            g_fNeedsNewline = true;     // for next message
+            g_fNeedsNewline2 = true;     // for next message
         }
     }
 }
