@@ -13,6 +13,7 @@
 
 #include <list>
 #include <iostream>
+#include <chrono>
 
 namespace XWP {
 
@@ -22,9 +23,16 @@ struct FuncItem
 {
     DebugFlag fl;
     string strFuncName;
+    chrono::steady_clock::time_point t1;
+
+    FuncItem(DebugFlag fl_, const string &strFuncName_)
+        : fl(fl_),
+          strFuncName(strFuncName_),
+          t1(chrono::steady_clock::now())
+    { }
 };
 
-std::recursive_mutex g_mutexDebug;
+Mutex g_mutexDebug;
 
 class DebugLock : public XWP::Lock
 {
@@ -70,6 +78,8 @@ void Debug::Leave(const string &strExtra /* = "" */)
             string s = "Leaving " + f.strFuncName;
             if (!strExtra.empty())
                 s += " (" + strExtra + ")";
+            chrono::milliseconds time_span = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - f.t1);
+            s += " -- took " + to_string(time_span.count()) + "ms";
             Debug::Log(f.fl, s);
         }
     }

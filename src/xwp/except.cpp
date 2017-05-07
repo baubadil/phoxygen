@@ -13,7 +13,7 @@
 namespace XWP
 {
 
-FSException::FSException(const string &str)
+FSException::FSException(const std::string &str)
     : _str(str)
 {
 //     assert(false);

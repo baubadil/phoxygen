@@ -12,6 +12,7 @@
 #define XWP_LOCK_H
 
 #include <mutex>
+#include <atomic>
 
 #include "xwp/basetypes.h"
 
@@ -24,33 +25,86 @@ namespace XWP
  *
  **************************************************************************/
 
+class Mutex : public std::recursive_mutex
+{
+    friend class Lock;
+private:
+    uint                    cLocked = 0;
+};
+
 class Lock : public ProhibitCopy
 {
 public:
-    Lock(std::recursive_mutex &m)
+    Lock(Mutex &m)
         : _m(m)
     {
-        _m.lock();
-        _fLocked = true;
+        request();
     }
 
     ~Lock()
     {
-        release();
+        release2();
     }
 
-    void release()
+    void request()
     {
-        if (_fLocked)
-            _m.unlock();
-        _fLocked = false;
+        _m.lock();
+        ++_m.cLocked;
+    }
+
+    void release2()
+    {
+        --_m.cLocked;
+        _m.unlock();
+    }
+
+    uint releaseAll()
+    {
+        auto c = _m.cLocked;
+        while (_m.cLocked)
+            release2();
+        return c;
+    }
+
+    bool isLocked()
+    {
+        return (_m.cLocked > 0);
     }
 
 protected:
-    std::recursive_mutex    &_m;
-    bool                    _fLocked = false;
+    Mutex   &_m;
 };
 
-}
+
+/***************************************************************************
+ *
+ *  StopFlag
+ *
+ **************************************************************************/
+
+class StopFlag
+{
+public:
+    StopFlag()
+    {
+        f = ATOMIC_VAR_INIT(false);
+    }
+
+    operator bool()
+    {
+        return f.load();
+    }
+
+    void set()
+    {
+        f = true;
+    }
+
+private:
+    std::atomic_bool    f;
+};
+
+
+} // namespace XWP
 
 #endif // XWP_LOCK_H

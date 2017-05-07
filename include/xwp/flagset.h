@@ -11,7 +11,7 @@
 #ifndef XWP_BITSET_H
 #define XWP_BITSET_H
 
-#include <bitset>
+#include <atomic>
 
 //
 
@@ -28,7 +28,7 @@
  *   3. Use operators, test(), set(), reset() to your liking.
  */
 
-template <typename EnumType, typename Underlying = int>
+template <typename EnumType, typename Underlying = uint>
 class FlagSet
 {
     typedef Underlying FlagSet::* RestrictedBool;

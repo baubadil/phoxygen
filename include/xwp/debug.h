@@ -46,8 +46,10 @@ const DebugFlag FILE_LOW        = (1 <<  3);
 
     // mid-level
 const DebugFlag FILE_MID        = (1 << 15);
+const DebugFlag XICONVIEW       = (1 << 16);
 
     // high-level
+const DebugFlag FILE_HIGH       = (1 << 19);
 const DebugFlag CMD_TOP         = (1 << 20);
 
 // #define DFL(a) (a)

@@ -57,7 +57,6 @@ string makePath(const string &str1,
 string getDirnameString(const string& str);
 string getBasenameString(const string &str);
 
-
 } // namespace XWP
 
 #endif // XWP_STRINGHELP_H
