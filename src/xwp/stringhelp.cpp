@@ -259,7 +259,6 @@ string makePath(const string &str1,
     return s + str2;
 }
 
-/* static */
 string getDirnameString(const string& str)
 {
     const char *p1 = str.c_str();
@@ -269,7 +268,6 @@ string getDirnameString(const string& str)
     return "";
 }
 
-/* static */
 string getBasenameString(const string &str)
 {
     const char *p1 = str.c_str();
@@ -277,6 +275,22 @@ string getBasenameString(const string &str)
     if (p2)
         return p2 + 1;
     return str;
+}
+
+string getExtensionString(const string &str)
+{
+    const char *p1 = str.c_str();
+    const char *p2 = strrchr(p1, '/');
+    const char *pStart;
+    if (p2)
+        pStart = p2 + 1;
+    else
+        pStart = p1;
+    const char *pDot = strrchr(pStart, '.');
+    if (pDot)
+        return pDot + 1;
+
+    return "";
 }
 
 } // namespace XWP
