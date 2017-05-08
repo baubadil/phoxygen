@@ -28,64 +28,44 @@
  *   3. Use operators, test(), set(), reset() to your liking.
  */
 
-template <typename EnumType, typename Underlying = uint>
+template<typename E>
 class FlagSet
 {
-    typedef Underlying FlagSet::* RestrictedBool;
-
 public:
-    FlagSet() : m_flags(Underlying()) {}
+    FlagSet() = default;
+    FlagSet(E v)
+      : value(static_cast<uint>(v))
+    { }
 
-    FlagSet(EnumType singleFlag):
-        m_flags((Underlying)singleFlag)
-    {}
-
-    FlagSet(const FlagSet& original):
-        m_flags(original.m_flags)
-    {}
-
-    FlagSet& operator |=(const FlagSet& f) {
-        m_flags |= f.m_flags;
-        return *this;
-    }
-
-    FlagSet& operator &=(const FlagSet& f) {
-        m_flags &= f.m_flags;
-        return *this;
-    }
-
-    friend FlagSet operator |(const FlagSet& f1, const FlagSet& f2) {
-        return FlagSet(f1) |= f2;
-    }
-
-    friend FlagSet operator &(const FlagSet& f1, const FlagSet& f2) {
-        return FlagSet(f1) &= f2;
-    }
-
-    void reset(const EnumType& f)
+    bool test(E rhs)
     {
-        m_flags &= ~((Underlying)f);
+        return !!(value & static_cast<uint>(rhs));
     }
 
-    bool test(const EnumType &f)
+    void set(E rhs)
     {
-        return !!(m_flags & (Underlying)f);
+        value |= static_cast<uint>(rhs);
     }
 
-    operator RestrictedBool() const {
-        return m_flags ? &FlagSet::m_flags : 0;
+    void clear(E rhs)
+    {
+        value &= ~(static_cast<uint>(rhs));
     }
 
-    Underlying value() const {
-        return m_flags;
-    }
-
-protected:
-    Underlying  m_flags;
+private:
+    uint value = 0;
 };
 
+template<typename E>
+FlagSet<E> operator|(E lhs, E rhs)
+{
+    FlagSet<E> s(lhs);
+    s.set(rhs);
+    return s;
+}
+
 /*
-#define DEFINE_BITSET(T) \
+#define DEFINE_FLAGSET(T) \
 inline T operator~ (T a) { return (T)~(int)(a); } \
 inline T operator| (T a, T b) { return (T)((int)(a) | (int)(b)); } \
 inline int operator| (int a, T b) { return ((a) | (int)(b)); } \
