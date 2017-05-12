@@ -13,6 +13,13 @@
 
 #include "xwp/basetypes.h"
 
+DEF_STRING(EMPTY_STRING, "");
+
+DEF_STRING(MDASH, u8"—");
+DEF_STRING(LDQUO, u8"“");
+DEF_STRING(RDQUO, u8"”");
+DEF_STRING(HELLIP, u8"…");
+
 namespace XWP
 {
 
@@ -57,6 +64,9 @@ string makePath(const string &str1,
 string getDirnameString(const string& str);
 string getBasenameString(const string &str);
 string getExtensionString(const string &str);
+
+string formatNumber(int z);
+string formatBytes(uint64_t u);
 
 } // namespace XWP
 

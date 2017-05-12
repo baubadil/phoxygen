@@ -13,8 +13,11 @@
 #include <functional>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 
 #include <string.h>
+
+using namespace std;
 
 namespace XWP
 {
@@ -245,7 +248,7 @@ bool endsWith(const string &strHaystack,
 
 string quote(const string &str)
 {
-    return "\"" + str + "\"";
+    return LDQUO + str + RDQUO;
 }
 
 string makePath(const string &str1,
@@ -292,5 +295,73 @@ string getExtensionString(const string &str)
 
     return "";
 }
+
+/**
+ *  Formats the given number according to the current locale.
+ */
+string formatNumber(int z)
+{
+    stringstream ss;
+    ss.imbue(locale(""));
+    ss << fixed << z;
+    return ss.str();
+}
+
+const string
+    strSuffixEB = " EB",
+    strSuffixPB = " PB",
+    strSuffixTB = " TB",
+    strSuffixGB = " GB",
+    strSuffixMB = " MB",
+    strSuffixKB = " KB",
+    strSuffixB = " bytes";
+
+string formatBytes(uint64_t u)
+{
+    const string *pSuffix = &strSuffixB;
+    double readable;
+    if (u >= 0x1000000000000000) // Exabyte
+    {
+        pSuffix = &strSuffixEB;
+        readable = (u >> 50);
+    }
+    else if (u >= 0x4000000000000) // Petabyte
+    {
+        pSuffix = &strSuffixPB;
+        readable = (u >> 40);
+    }
+    else if (u >= 0x10000000000) // Terabyte
+    {
+        pSuffix = &strSuffixTB;
+        readable = (u >> 30);
+    }
+    else if (u >= 0x40000000) // Gigabyte
+    {
+        pSuffix = &strSuffixGB;
+        readable = (u >> 20);
+    }
+    else if (u >= 0x100000) // Megabyte
+    {
+        pSuffix = &strSuffixMB;
+        readable = (u >> 10);
+    }
+    else if (u >= 0x400) // Kilobyte
+    {
+        pSuffix = &strSuffixKB;
+        readable = u;
+    }
+    else
+    {
+        return to_string(u) + strSuffixB;
+    }
+    // Divide by 1024 to get fractional value.
+    readable = (readable / 1024);
+    // Return formatted number with suffix
+    std::stringstream ss;
+    ss.imbue(locale(""));
+    ss << fixed << setprecision(2) << readable;
+    return ss.str() + *pSuffix;
+}
+
 
 } // namespace XWP
