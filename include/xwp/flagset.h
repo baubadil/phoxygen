@@ -37,7 +37,7 @@ public:
       : value(static_cast<uint>(v))
     { }
 
-    bool test(E rhs)
+    bool test(E rhs) const
     {
         return !!(value & static_cast<uint>(rhs));
     }
