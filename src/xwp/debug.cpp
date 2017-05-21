@@ -9,7 +9,7 @@
  */
 
 #include "xwp/debug.h"
-#include "xwp/lock.h"
+#include "xwp/thread.h"
 
 #include <list>
 #include <iostream>

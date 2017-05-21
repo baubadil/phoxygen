@@ -9,6 +9,9 @@
  */
 
 #include "xwp/except.h"
+#include "xwp/debug.h"
+
+#include <cassert>
 
 namespace XWP
 {
@@ -17,6 +20,7 @@ FSException::FSException(const std::string &str)
     : _str(str)
 {
 //     assert(false);
+    Debug::Log(FSEXCEPTION, str);
 }
 
 /* virtual */

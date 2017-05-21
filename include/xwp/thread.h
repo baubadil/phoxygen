@@ -21,10 +21,33 @@ namespace XWP
 
 /***************************************************************************
  *
+ *  Thread
+ *
+ **************************************************************************/
+
+/**
+ *
+ */
+class Thread : public ProhibitCopy
+{
+public:
+    static unsigned int Create(std::function<void ()> &&fn);
+
+    static unsigned int getHardwareConcurrency();
+
+    static unsigned int Sleep(uint64_t ms);
+};
+
+
+/***************************************************************************
+ *
  *  Lock
  *
  **************************************************************************/
 
+/**
+ *  Extension of the std::recursive_mutex class with some bookkeeping.
+ */
 class Mutex : public std::recursive_mutex
 {
     friend class Lock;
@@ -32,6 +55,9 @@ private:
     uint                    cLocked = 0;
 };
 
+/**
+ *  Replacement of std::lock_guard with bookkeeping.
+ */
 class Lock : public ProhibitCopy
 {
 public:
