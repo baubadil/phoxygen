@@ -35,7 +35,7 @@ public:
 
     static unsigned int getHardwareConcurrency();
 
-    static unsigned int Sleep(uint64_t ms);
+    static void Sleep(uint64_t ms);
 };
 
 

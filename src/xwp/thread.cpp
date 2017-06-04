@@ -12,6 +12,7 @@
 
 #include <thread>
 #include <atomic>
+#include <cassert>
 
 std::atomic<unsigned int> g_uThreadID(0);
 
@@ -27,6 +28,7 @@ Thread::Create(std::function<void ()> &&fn)
         }
         catch (...)
         {
+//             assert(false);
         }
     });
     pThread->detach();
@@ -41,7 +43,7 @@ Thread::getHardwareConcurrency()
 }
 
 /* static */
-unsigned int Thread::Sleep(uint64_t ms)
+void Thread::Sleep(uint64_t ms)
 {
     this_thread::sleep_for(chrono::milliseconds(50));
 }
