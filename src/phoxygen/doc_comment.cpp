@@ -78,14 +78,10 @@ string CommentBase::formatComment(OutputMode mode)
     while(std::getline(ss, line, '\n'))
     {
         static const Regex s_reEmptyLine(R"i____(^\s*$)i____");
-        static const Regex s_reOpenPRE(R"i____(^\s*```(?:php|javascript|xml|sql)\s*$)i____");
+        // Three backticks for a code block is a doxygen markdown extension. http://www.stack.nl/~dimitri/doxygen/manual/markdown.html
+        static const Regex s_reOpenPRE(R"i____(^\s*```(?:\S*)\s*$)i____");
         static const Regex s_reClosePRE(R"i____(^\s*```\s*$)i____");
-        if (s_reOpenPRE.matches(line))
-        {
-            paraState = PState::VERBATIM;
-            strOutput += fmt.openPRE();
-        }
-        else if (paraState == PState::VERBATIM)
+        if (paraState == PState::VERBATIM)
         {
             if (s_reClosePRE.matches(line))
             {
@@ -94,6 +90,11 @@ string CommentBase::formatComment(OutputMode mode)
             }
             else
                 strOutput += fmt.format(line, true) + "\n";
+        }
+        else if (s_reOpenPRE.matches(line))
+        {
+            paraState = PState::VERBATIM;
+            strOutput += fmt.openPRE();
         }
         else if (s_reEmptyLine.matches(line))
         {
