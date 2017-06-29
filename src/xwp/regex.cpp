@@ -27,11 +27,11 @@ const string& RegexMatches::get(uint u)
         if (u < v.size())
             return v[u];
 
-        strExcept = "Invalid index " + to_string(u) + " into regex matches (0: \"" + v[0] + "\")";
+        strExcept = "Invalid index " + to_string(u) + " into regex matches (0: " + quote(v[0]) + ")";
     }
 
     if (pRE)
-        strExcept += " -- size was " + to_string(v.size()) + " -- RE: \"" + pRE->toString() + "\"";
+        strExcept += " -- size was " + to_string(v.size()) + " -- RE: " + quote(pRE->toString()) + "";
     throw FSException(strExcept);
 }
 
@@ -55,7 +55,7 @@ public:
                                   &pcszError,
                                   &iOffset,
                                   NULL)))      // default character tables
-            throw FSException("Error compiling regular expression \"" + str + "\": " + string(pcszError));
+            throw FSException("Error compiling regular expression " + quote(str) + ": " + string(pcszError));
 
         _pPCREExtra = pcre_study(_pRE,
                                  PCRE_STUDY_JIT_COMPILE,        // This option brings search/replace in phoxygen from six seconds down to one.
@@ -289,7 +289,7 @@ size_t Regex::findReplaceImpl(string &strHaystack,
                                             string str(strHaystack.substr(first, last - first));
                                             state.vMatches.push_back(str);
 
-//                                             Debug::Log(0, "Closure: i=" + to_string(i) + ", first=" + to_string(first) + ", last=" + to_string(last) + " => str=\"" + str + "\"");
+//                                             Debug::Log(0, "Closure: i=" + to_string(i) + ", first=" + to_string(first) + ", last=" + to_string(last) + " => str=" + quote(str) + "");
                                         },
                                         ofs);
 

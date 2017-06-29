@@ -10,10 +10,13 @@
 
 #include "xwp/debug.h"
 #include "xwp/thread.h"
+#include "xwp/debug_c.h"
 
 #include <list>
 #include <iostream>
 #include <chrono>
+#include <cstdarg>
+#include <cstring>
 
 namespace XWP {
 
@@ -183,7 +186,61 @@ Debug::MakeColor(AnsiColor c, string str)
 void
 Debug::Warning(const string& str)
 {
-    Log(DEBUG_ALWAYS, MakeColor(AnsiColor::YELLOW, str));
+    Log(DEBUG_ALWAYS, MakeColor(AnsiColor::YELLOW, "WARNING: " + str));
 }
 
 } // namespace
+
+void DebugEnter(const char *pcszFormat, ...)
+{
+    std::string str;
+    if (pcszFormat && *pcszFormat)
+    {
+        va_list ap;
+        va_start(ap, pcszFormat);
+        char *p;
+        if (vasprintf(&p, pcszFormat, ap) > 0)
+        {
+            str = p;
+            free(p);
+        }
+    }
+
+    Debug::Enter(DEBUG_C, str);
+}
+
+void DebugLeave(const char *pcszFormat, ...)
+{
+    std::string str;
+    if (pcszFormat && *pcszFormat)
+    {
+        va_list ap;
+        va_start(ap, pcszFormat);
+        char *p;
+        if (vasprintf(&p, pcszFormat, ap) > 0)
+        {
+            str = p;
+            free(p);
+        }
+    }
+
+    Debug::Leave(str);
+}
+
+void DebugLog(const char *pcszFormat, ...)
+{
+    std::string str;
+    if (pcszFormat && *pcszFormat)
+    {
+        va_list ap;
+        va_start(ap, pcszFormat);
+        char *p;
+        if (vasprintf(&p, pcszFormat, ap) > 0)
+        {
+            str = p;
+            free(p);
+        }
+    }
+
+    Debug::Log(DEBUG_C, str);
+}

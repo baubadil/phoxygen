@@ -49,6 +49,7 @@ const DebugFlag FILE_MID        = (1 << 15);
 const DebugFlag XICONVIEW       = (1 << 16);
 
     // high-level
+const DebugFlag DEBUG_C         = (1 << 17);
 const DebugFlag FSEXCEPTION     = (1 << 18);
 const DebugFlag FILE_HIGH       = (1 << 19);
 const DebugFlag CMD_TOP         = (1 << 20);
