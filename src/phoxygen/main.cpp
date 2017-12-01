@@ -8,6 +8,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the LICENSE file for more details.
  */
 
+/*
+ *  To compile the .tex files that Doreen emits, you need latex-fontsextra and
+ *  texlive-latexextra.
+ */
+
 #define DEF_STRING_IMPLEMENTATION
 
 #include "xwp/exec.h"
