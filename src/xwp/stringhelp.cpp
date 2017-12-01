@@ -251,6 +251,14 @@ string quote(const string &str)
     return LDQUO + str + RDQUO;
 }
 
+const string STR_TRUE("true");
+const string STR_FALSE("false");
+
+const string& trueFalse(bool f)
+{
+    return (f) ? STR_TRUE : STR_FALSE;
+}
+
 string makePath(const string &str1,
                 const string &str2)
 {

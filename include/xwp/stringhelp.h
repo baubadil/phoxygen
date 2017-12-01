@@ -57,6 +57,7 @@ bool endsWith(const string &strHaystack,
               const string &strEnd);
 
 string quote(const string &str1);
+const string& trueFalse(bool f);
 
 string makePath(const string &str1,
                 const string &str2);
