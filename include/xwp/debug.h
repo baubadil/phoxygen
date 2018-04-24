@@ -26,8 +26,9 @@ enum class AnsiColor
     GREEN,
     YELLOW,
     BLUE,
+    BRIGHT_BLUE,
     MAGENTA,
-    CYAN
+    CYAN,
 };
 
 
@@ -76,6 +77,8 @@ public:
     static void Warning(const string &str);
 
     static string MakeColor(AnsiColor c, string str);
+    
+    static void SetProgramName(const char *pcsz);
 };
 
 } // namespace XWP
