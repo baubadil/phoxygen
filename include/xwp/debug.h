@@ -54,6 +54,7 @@ const DebugFlag DEBUG_C         = (1 << 17);
 const DebugFlag FSEXCEPTION     = (1 << 18);
 const DebugFlag FILE_HIGH       = (1 << 19);
 const DebugFlag CMD_TOP         = (1 << 20);
+const DebugFlag CMD_ARGS        = (1 << 21);
 
 // #define DFL(a) (a)
 // const DebugFlag g_dflLevel1 =   DFL(CMD_TOP);
@@ -77,7 +78,7 @@ public:
     static void Warning(const string &str);
 
     static string MakeColor(AnsiColor c, string str);
-    
+
     static void SetProgramName(const char *pcsz);
 };
 
